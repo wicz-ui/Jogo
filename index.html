@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Teste do ProfileRepository</title>
+</head>
+<body>
+    <h1>Teste de Dados - Guardiões da Escola</h1>
+    <p>Pressione <strong>F12</strong> e clique na aba <strong>Console</strong> para ver o resultado do seu código!</p>
+
+    <!-- Usamos type="module" porque o seu arquivo tem "export" -->
+    <script type="module">
+        // 1. Importando as funções que você criou
+        import { criarNovoPerfil, carregarPerfil } from './src/data/ProfileRepository.js';
+
+        // 2. Testando a criação de um perfil
+        console.log("Criando um novo perfil para o jogador 'Dorival'...");
+        const novo = criarNovoPerfil("Dorival");
+        console.log("Perfil criado e salvo:", novo);
+
+        // 3. Testando o carregamento dos dados
+        console.log("Buscando dados salvos no navegador...");
+        const salvo = carregarPerfil();
+        console.log("Perfil carregado com sucesso:", salvo);
+    </script>
+</body>
+</html>
