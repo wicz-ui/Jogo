@@ -1,0 +1,5 @@
+node_modules/
+dist/
+firefox-profile-*/
+.DS_Store
+*.log

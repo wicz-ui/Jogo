@@ -1,5 +1,18 @@
 {
+  "name": "guardioes-da-escola",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test:backend": "node src/test-backend.js"
+  },
   "dependencies": {
-    "phaser": "^4.2.1"
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "vite": "^7.1.5"
   }
 }

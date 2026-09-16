@@ -1,6 +1,17 @@
 import { CHOICES } from '../data/choicesData.js';
 
 export class ChoiceService {
+  static interacaoConcluida(perfil, interacaoId) {
+    if (!perfil || !Array.isArray(perfil.escolhasRealizadas)) {
+      return false;
+    }
+
+    return perfil.escolhasRealizadas.some((registro) => {
+      const choiceId = typeof registro === "string" ? registro : registro?.choiceId;
+      return CHOICES[choiceId]?.interacaoId === interacaoId;
+    });
+  }
+
   /**
    * Processa a escolha feita pelo jogador e atualiza os dados do perfil.
    * @param {Object} perfil Objeto do perfil atual
@@ -10,21 +21,40 @@ export class ChoiceService {
   static registrarEscolha(perfil, choiceId) {
     const escolha = CHOICES[choiceId];
 
-    if (!escolha) {
+    if (!escolha || !perfil || typeof perfil !== "object") {
       return { sucesso: false, erro: "Escolha inválida ou não encontrada." };
     }
 
     // Inicializa a lista de escolhas no perfil se ainda não existir
-    if (!perfil.escolhasRealizadas) {
+    if (!Array.isArray(perfil.escolhasRealizadas)) {
       perfil.escolhasRealizadas = [];
     }
 
+    if (!perfil.pontuacao) {
+      perfil.pontuacao = {};
+    }
+
     // Regra de Negócio: Impedir escolhas duplicadas
-    if (perfil.escolhasRealizadas.includes(choiceId)) {
+    const escolhaJaRegistrada = perfil.escolhasRealizadas.some((registro) => {
+      const idRegistrado = typeof registro === "string" ? registro : registro?.choiceId;
+      return idRegistrado === choiceId;
+    });
+
+    if (escolhaJaRegistrada) {
       return { 
         sucesso: false, 
         erro: "Esta ação já foi realizada anteriormente.",
         perfil 
+      };
+    }
+
+    // As alternativas do computador pertencem à mesma interação.
+    if (escolha.interacaoId && this.interacaoConcluida(perfil, escolha.interacaoId)) {
+      return {
+        sucesso: false,
+        erro: "Esta interação já foi resolvida anteriormente.",
+        interacaoConcluida: true,
+        perfil
       };
     }
 

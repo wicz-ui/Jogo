@@ -1,4 +1,65 @@
-# Jogo
+# Guardiões da Escola
+
+## Marco 1 — protótipo funcional
+
+Este repositório contém o primeiro marco do jogo educativo 2D
+**Guardiões da Escola**. O protótipo usa JavaScript, Phaser 3, Vite e
+`localStorage` para demonstrar o fluxo entre gameplay, regras de negócio e
+persistência local.
+
+### Instalação e execução
+
+```bash
+npm install
+npm run dev
+```
+
+Para gerar a versão de produção:
+
+```bash
+npm run build
+npm run preview
+```
+
+Para executar os testes simples dos serviços:
+
+```bash
+npm run test:backend
+```
+
+### O que está implementado no Marco 1
+
+- Menu principal com Novo Jogo e Continuar funcionais.
+- Criação, seleção e recuperação de perfis locais.
+- Fase 1 com sala placeholder, personagem e movimentação por WASD/setas.
+- Computador interativo com prompt `[E] Interagir` e caixa de escolha.
+- ChoiceService aplicando as consequências de desligar ou ignorar.
+- HUD com objetivo, perfil, cuidado e conduta.
+- Salvamento após escolhas e recuperação dos dados após recarregar a página.
+- Bloqueio da repetição e da alternativa oposta da mesma interação.
+
+As instruções, configurações e créditos exibem apenas o aviso de que serão
+desenvolvidos em etapa futura. Fase 2, Fase 3, servidor, SQL, autenticação e
+final completo não fazem parte deste marco.
+
+### Estrutura principal do Marco 1
+
+- `src/main.js`: configuração e inicialização do Phaser 3.
+- `src/data/`: perfis e catálogo de escolhas.
+- `src/services/`: regras de escolhas e progressão.
+- `src/entities/`: personagem placeholder.
+- `src/scenes/`: menu, perfis e Fase 1.
+- `src/ui/`: botões, HUD, prompt e diálogo de escolha.
+
+### Fluxo manual
+
+1. Abra o endereço informado pelo Vite e clique em **NOVO JOGO**.
+2. Digite um nome, clique em **CRIAR PERFIL** e depois em **INICIAR JOGO**.
+3. Na Fase 1, mova o personagem com WASD ou as setas até o computador.
+4. Quando aparecer `[E] Interagir`, pressione `E` e escolha uma alternativa.
+5. Confira a mensagem, o impacto e os valores atualizados no HUD.
+6. Recarregue a página, clique em **CONTINUAR** e confirme que o perfil e a
+   pontuação permanecem salvos. O computador resolvido não aceita outra escolha.
 
 ## Objetivo final da estrutura
 
