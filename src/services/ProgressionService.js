@@ -6,6 +6,10 @@ export class ProgressionService {
    * @returns {Object} Perfil atualizado
    */
   static concluirFase(perfil, faseConcluida) {
+    if (!perfil || typeof perfil !== "object") {
+      return { sucesso: false, erro: "Perfil inválido." };
+    }
+
     if (!perfil.progresso) {
       perfil.progresso = { faseAtual: 1, fasesConcluidas: [] };
     }
@@ -18,8 +22,8 @@ export class ProgressionService {
       perfil.progresso.fasesConcluidas.push(faseConcluida);
     }
     
-    // Atualiza para a próxima fase
-    perfil.progresso.faseAtual = faseConcluida + 1;
+    // Atualiza para a próxima fase mantendo a maior fase alcançada
+    perfil.progresso.faseAtual = Math.max(perfil.progresso.faseAtual || 1, faseConcluida + 1);
 
     return perfil;
   }

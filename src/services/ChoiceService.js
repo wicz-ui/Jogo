@@ -1,6 +1,9 @@
 import { CHOICES } from '../data/choicesData.js';
 
 export class ChoiceService {
+  /**
+   * Verifica se uma interação específica já foi concluída no perfil.
+   */
   static interacaoConcluida(perfil, interacaoId) {
     if (!perfil || !Array.isArray(perfil.escolhasRealizadas)) {
       return false;
@@ -13,10 +16,30 @@ export class ChoiceService {
   }
 
   /**
+   * Retorna o progresso atual das interações obrigatorias da fase (ex: "1/3", "3/3")
+   * e indica se todas foram resolvidas.
+   */
+  static obterProgressoFase(perfil, listaInteracoesObrigatorias = []) {
+    if (!perfil || !Array.isArray(listaInteracoesObrigatorias) || listaInteracoesObrigatorias.length === 0) {
+      return { resolvidas: 0, total: 0, texto: "0/0", faseConcluida: false };
+    }
+
+    const resolvidas = listaInteracoesObrigatorias.filter((interacaoId) =>
+      this.interacaoConcluida(perfil, interacaoId)
+    ).length;
+
+    const total = listaInteracoesObrigatorias.length;
+
+    return {
+      resolvidas,
+      total,
+      texto: `${resolvidas}/${total}`,
+      faseConcluida: resolvidas === total
+    };
+  }
+
+  /**
    * Processa a escolha feita pelo jogador e atualiza os dados do perfil.
-   * @param {Object} perfil Objeto do perfil atual
-   * @param {string} choiceId Identificador da escolha feita
-   * @returns {Object} Resultado do processamento
    */
   static registrarEscolha(perfil, choiceId) {
     const escolha = CHOICES[choiceId];
@@ -25,16 +48,15 @@ export class ChoiceService {
       return { sucesso: false, erro: "Escolha inválida ou não encontrada." };
     }
 
-    // Inicializa a lista de escolhas no perfil se ainda não existir
     if (!Array.isArray(perfil.escolhasRealizadas)) {
       perfil.escolhasRealizadas = [];
     }
 
     if (!perfil.pontuacao) {
-      perfil.pontuacao = {};
+      perfil.pontuacao = { cuidado: 0, conduta: 0 };
     }
 
-    // Regra de Negócio: Impedir escolhas duplicadas
+    // Impede a mesma escolha exata duas vezes
     const escolhaJaRegistrada = perfil.escolhasRealizadas.some((registro) => {
       const idRegistrado = typeof registro === "string" ? registro : registro?.choiceId;
       return idRegistrado === choiceId;
@@ -48,7 +70,7 @@ export class ChoiceService {
       };
     }
 
-    // As alternativas do computador pertencem à mesma interação.
+    // Impede responder a mesma interação mais de uma vez
     if (escolha.interacaoId && this.interacaoConcluida(perfil, escolha.interacaoId)) {
       return {
         sucesso: false,
