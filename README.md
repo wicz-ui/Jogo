@@ -1,11 +1,11 @@
 # Guardiões da Escola
 
-## Marco 1 — protótipo funcional
+## Marco 2 — Fase 1 curta e completa
 
-Este repositório contém o primeiro marco do jogo educativo 2D
-**Guardiões da Escola**. O protótipo usa JavaScript, Phaser 3, Vite e
-`localStorage` para demonstrar o fluxo entre gameplay, regras de negócio e
-persistência local.
+Este repositório contém o segundo marco do jogo educativo 2D
+**Guardiões da Escola**. A Fase 1 agora é uma experiência curta e completa,
+com três situações interativas, progresso, conclusão e persistência local.
+O projeto usa JavaScript, Phaser 3, Vite e `localStorage`.
 
 ### Instalação e execução
 
@@ -27,39 +27,58 @@ Para executar os testes simples dos serviços:
 npm run test:backend
 ```
 
-### O que está implementado no Marco 1
+### O que está implementado no Marco 2
 
 - Menu principal com Novo Jogo e Continuar funcionais.
 - Criação, seleção e recuperação de perfis locais.
-- Fase 1 com sala placeholder, personagem e movimentação por WASD/setas.
-- Computador interativo com prompt `[E] Interagir` e caixa de escolha.
-- ChoiceService aplicando as consequências de desligar ou ignorar.
-- HUD com objetivo, perfil, cuidado e conduta.
-- Salvamento após escolhas e recuperação dos dados após recarregar a página.
-- Bloqueio da repetição e da alternativa oposta da mesma interação.
+- Fase 1 — Laboratório com personagem e movimentação por WASD/setas.
+- Três interações alcançáveis: computador, lixo e equipamento.
+- ChoiceDialog reutilizável com duas alternativas por situação.
+- ChoiceService aplicando consequências e bloqueando repetição ou alternativa oposta.
+- HUD com objetivo, perfil, cuidado, conduta e progresso de `0/3` a `3/3`.
+- Indicador textual `✓ RESOLVIDO` nos objetos já analisados.
+- Modal de conclusão após resolver as três situações.
+- ProgressionService liberando a fase seguinte e `StageResultScene` exibindo o resumo.
+- Salvamento após cada escolha e após a conclusão da fase.
+- Recuperação, após recarregar, das escolhas, pontuação e progresso (`faseAtual = 2`).
 
 As instruções, configurações e créditos exibem apenas o aviso de que serão
-desenvolvidos em etapa futura. Fase 2, Fase 3, servidor, SQL, autenticação e
-final completo não fazem parte deste marco.
+desenvolvidos em etapa futura. A Fase 2 ainda não é jogável; servidor, SQL,
+autenticação e final completo não fazem parte deste marco.
 
-### Estrutura principal do Marco 1
+### Estrutura principal do Marco 2
 
 - `src/main.js`: configuração e inicialização do Phaser 3.
 - `src/data/`: perfis e catálogo de escolhas.
 - `src/services/`: regras de escolhas e progressão.
 - `src/entities/`: personagem placeholder.
-- `src/scenes/`: menu, perfis e Fase 1.
-- `src/ui/`: botões, HUD, prompt e diálogo de escolha.
+- `src/scenes/`: menu, perfis, Fase 1 e resultado da fase.
+- `src/ui/`: botões, HUD, prompt e diálogo de escolha reutilizável.
 
 ### Fluxo manual
 
 1. Abra o endereço informado pelo Vite e clique em **NOVO JOGO**.
 2. Digite um nome, clique em **CRIAR PERFIL** e depois em **INICIAR JOGO**.
-3. Na Fase 1, mova o personagem com WASD ou as setas até o computador.
+3. Na Fase 1, mova o personagem com WASD ou as setas até o computador, o lixo
+   e o equipamento.
 4. Quando aparecer `[E] Interagir`, pressione `E` e escolha uma alternativa.
-5. Confira a mensagem, o impacto e os valores atualizados no HUD.
-6. Recarregue a página, clique em **CONTINUAR** e confirme que o perfil e a
-   pontuação permanecem salvos. O computador resolvido não aceita outra escolha.
+5. Confira a mensagem, o impacto, a pontuação e o progresso atualizados no HUD.
+6. Resolva as três situações para abrir o modal **FASE CONCLUÍDA**.
+7. Clique em **FINALIZAR FASE** e confira a `StageResultScene` com o resumo.
+8. Recarregue a página, clique em **CONTINUAR** e confirme que o resultado,
+   as escolhas, a pontuação e o desbloqueio da próxima fase permanecem salvos.
+
+### Testes
+
+```bash
+npm install
+npm run test:backend
+npm run build
+```
+
+Os testes cobrem as seis escolhas, alternativas mutuamente exclusivas,
+progresso `0/3` → `3/3`, conclusão da fase, persistência após salvar/carregar
+e independência entre os perfis João e Maria.
 
 ## Objetivo final da estrutura
 

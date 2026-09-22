@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import MainMenuScene from "./scenes/MainMenuScene.js";
 import ProfileScene from "./scenes/ProfileScene.js";
 import Stage1Scene from "./scenes/Stage1Scene.js";
+import StageResultScene from "./scenes/StageResultScene.js";
 
 const config = {
   // O MVP usa apenas formas 2D; Canvas mantém a renderização previsível
@@ -25,7 +26,7 @@ const config = {
       debug: false
     }
   },
-  scene: [MainMenuScene, ProfileScene, Stage1Scene]
+  scene: [MainMenuScene, ProfileScene, Stage1Scene, StageResultScene]
 };
 
 const game = new Phaser.Game(config);

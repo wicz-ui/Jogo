@@ -6,6 +6,7 @@ export class ChoiceDialog {
     this.isOpen = false;
     this.selectionLocked = false;
     this.onChoice = null;
+    this.opcoes = [];
 
     this.overlay = scene.add
       .rectangle(640, 360, 1280, 720, 0x000000, 0.72)
@@ -25,57 +26,89 @@ export class ChoiceDialog {
       .setOrigin(0.5)
       .setDepth(52);
     this.message = scene.add
-      .text(640, 305, "O computador está ligado sem necessidade.\nO que deseja fazer?", {
+      .text(640, 305, "", {
         color: "#ffffff",
         fontFamily: "Arial, sans-serif",
         fontSize: "22px",
         align: "center",
-        lineSpacing: 8
+        lineSpacing: 8,
+        wordWrap: { width: 680 }
       })
       .setOrigin(0.5)
       .setDepth(52);
 
-    this.desligarButton = criarBotao(
+    this.optionButtons = [
+      criarBotao(
       scene,
       640,
       420,
-      "Desligar corretamente",
-      () => this.choose("desligar_computador"),
+      "Opção 1",
+      () => this.choose(0),
       { width: 500, height: 62, fontSize: "21px" }
-    ).setDepth(52);
-    this.ignorarButton = criarBotao(
+      ).setDepth(52),
+      criarBotao(
       scene,
       640,
       510,
-      "Ignorar",
-      () => this.choose("ignorar_computador"),
+      "Opção 2",
+      () => this.choose(1),
       { width: 500, height: 62, fontSize: "21px", color: 0x80533b }
-    ).setDepth(52);
+      ).setDepth(52)
+    ];
 
     this.elements = [
       this.overlay,
       this.panel,
       this.title,
       this.message,
-      this.desligarButton,
-      this.ignorarButton
+      ...this.optionButtons
     ];
     this.hide();
   }
 
-  show(onChoice) {
+  show(configuracao) {
     if (this.isOpen) {
+      return;
+    }
+
+    const configuracaoNormalizada = configuracao || {};
+    const opcoes = Array.isArray(configuracaoNormalizada.opcoes)
+      ? configuracaoNormalizada.opcoes.filter((opcao) => opcao?.choiceId).slice(0, 2)
+      : [];
+
+    if (opcoes.length === 0) {
       return;
     }
 
     this.isOpen = true;
     this.selectionLocked = false;
-    this.onChoice = onChoice;
+    this.onChoice = configuracaoNormalizada.onChoice;
+    this.opcoes = opcoes;
+    this.title.setText(configuracaoNormalizada.titulo || "Escolha uma ação");
+    this.message.setText(configuracaoNormalizada.mensagem || "");
+
+    this.optionButtons.forEach((button, index) => {
+      const opcao = this.opcoes[index];
+      button.setLabel(opcao?.texto || "");
+      button.setButtonVisible(Boolean(opcao));
+    });
+
     this.elements.forEach((element) => element.setVisible(true));
+
+    this.optionButtons.forEach((button, index) => {
+      if (!this.opcoes[index]) {
+        button.setButtonVisible(false);
+      }
+    });
   }
 
-  choose(choiceId) {
+  choose(index) {
     if (!this.isOpen || this.selectionLocked) {
+      return;
+    }
+
+    const opcao = this.opcoes[index];
+    if (!opcao) {
       return;
     }
 
@@ -84,7 +117,7 @@ export class ChoiceDialog {
     this.hide();
 
     if (callback) {
-      callback(choiceId);
+      callback(opcao.choiceId, opcao);
     }
   }
 
@@ -97,10 +130,12 @@ export class ChoiceDialog {
   hide() {
     this.isOpen = false;
     this.elements?.forEach((element) => element.setVisible(false));
+    this.optionButtons?.forEach((button) => button.setButtonVisible(false));
   }
 
   destroy() {
-    this.elements.forEach((element) => element.destroy(true));
+    this.elements?.forEach((element) => element.destroy(true));
     this.elements = [];
+    this.opcoes = [];
   }
 }

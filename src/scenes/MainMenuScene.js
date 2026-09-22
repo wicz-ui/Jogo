@@ -72,7 +72,8 @@ export class MainMenuScene extends Phaser.Scene {
       return;
     }
 
-    this.scene.start("Stage1Scene", { perfil });
+    const fase1Concluida = perfil.progresso?.fasesConcluidas?.includes(1);
+    this.scene.start(fase1Concluida ? "StageResultScene" : "Stage1Scene", { perfil });
   }
 
   mostrarAviso() {
