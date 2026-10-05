@@ -174,7 +174,7 @@ export class ProfileScene extends Phaser.Scene {
     }
 
     const perfilAtualizado = carregarPerfil(this.perfilSelecionado.id) || this.perfilSelecionado;
-    this.scene.start("Stage1Scene", { perfil: perfilAtualizado });
+    this.scene.start("StageSelectScene", { perfil: perfilAtualizado });
   }
 }
 

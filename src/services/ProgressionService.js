@@ -1,5 +1,39 @@
 export class ProgressionService {
   /**
+   * Verifica se o perfil pode entrar em uma fase jogável neste marco.
+   * A regra fica no serviço para que a interface não seja a única barreira.
+   */
+  static podeAcessarFase(perfil, numeroFase) {
+    if (numeroFase === 1) {
+      return true;
+    }
+
+    if (numeroFase === 2) {
+      return Boolean(perfil?.progresso?.fasesConcluidas?.includes(1));
+    }
+
+    // A Fase 3 aparece na seleção, mas ainda não possui gameplay.
+    return false;
+  }
+
+  /**
+   * Retorna o estado que a tela de seleção deve apresentar para a fase.
+   */
+  static obterStatusFase(perfil, numeroFase) {
+    if (numeroFase === 3) {
+      return "em_desenvolvimento";
+    }
+
+    if (perfil?.progresso?.fasesConcluidas?.includes(numeroFase)) {
+      return "concluida";
+    }
+
+    return this.podeAcessarFase(perfil, numeroFase)
+      ? "disponivel"
+      : "bloqueada";
+  }
+
+  /**
    * Conclui a fase atual e atualiza a fase ativa no perfil.
    * @param {Object} perfil Objeto do perfil atual
    * @param {number} faseConcluida Número da fase

@@ -1,13 +1,8 @@
 import Phaser from "phaser";
 import { carregarPerfilAtivo } from "../data/ProfileRepository.js";
 import { ChoiceService } from "../services/ChoiceService.js";
+import { obterConfiguracaoFase } from "../data/stagesData.js";
 import { criarBotao } from "../ui/GameButton.js";
-
-const INTERACOES_OBRIGATORIAS = [
-  "computador_01",
-  "lixo_01",
-  "equipamento_01"
-];
 
 export class StageResultScene extends Phaser.Scene {
   constructor() {
@@ -16,6 +11,8 @@ export class StageResultScene extends Phaser.Scene {
 
   init(data) {
     this.perfil = data?.perfil || carregarPerfilAtivo();
+    this.stageNumber = Number(data?.stageNumber) || 1;
+    this.stageConfig = obterConfiguracaoFase(this.stageNumber) || obterConfiguracaoFase(1);
   }
 
   create() {
@@ -27,7 +24,7 @@ export class StageResultScene extends Phaser.Scene {
     const pontuacao = this.perfil.pontuacao || {};
     const progresso = ChoiceService.obterProgressoFase(
       this.perfil,
-      INTERACOES_OBRIGATORIAS
+      this.stageConfig.interacoesObrigatorias
     );
 
     this.add.rectangle(640, 360, 1280, 720, 0x081a2d, 1);
@@ -36,7 +33,7 @@ export class StageResultScene extends Phaser.Scene {
       .setStrokeStyle(3, 0x8fe6e4, 1);
 
     this.add
-      .text(640, 120, "FASE 1 CONCLUÍDA", {
+      .text(640, 120, `FASE ${this.stageConfig.numeroFase} CONCLUÍDA`, {
         color: "#f4ffff",
         fontFamily: "Arial, sans-serif",
         fontSize: "44px",
@@ -46,7 +43,7 @@ export class StageResultScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(640, 190, "Você analisou todas as situações do laboratório.", {
+      .text(640, 190, this.stageConfig.mensagemConclusao, {
         color: "#9fe6e5",
         fontFamily: "Arial, sans-serif",
         fontSize: "22px",
@@ -71,7 +68,7 @@ export class StageResultScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.feedbackText = this.add
-      .text(640, 495, "Fase 2 desbloqueada e será implementada no próximo marco.", {
+      .text(640, 495, "Seu progresso foi salvo. Escolha a próxima etapa.", {
         color: "#c6e9ee",
         fontFamily: "Arial, sans-serif",
         fontSize: "18px",
@@ -82,19 +79,19 @@ export class StageResultScene extends Phaser.Scene {
 
     criarBotao(
       this,
-      640,
+      485,
       575,
-      "CONTINUAR",
-      () => this.feedbackText.setText("A Fase 2 ainda será desenvolvida no próximo marco."),
-      { width: 290, height: 54, fontSize: "19px" }
+      "SELEÇÃO DE FASES",
+      () => this.scene.start("StageSelectScene", { perfil: this.perfil }),
+      { width: 300, height: 54, fontSize: "18px" }
     );
     criarBotao(
       this,
-      640,
-      650,
+      795,
+      575,
       "MENU PRINCIPAL",
       () => this.scene.start("MainMenuScene"),
-      { width: 290, height: 54, fontSize: "19px", color: 0x287d5b }
+      { width: 260, height: 54, fontSize: "18px", color: 0x287d5b }
     );
   }
 }

@@ -1,9 +1,10 @@
 import { ChoiceService } from "../services/ChoiceService.js";
 
 export class HUD {
-  constructor(scene, perfil, listaInteracoesObrigatorias = []) {
+  constructor(scene, perfil, listaInteracoesObrigatorias = [], objetivo = "") {
     this.scene = scene;
     this.listaInteracoesObrigatorias = listaInteracoesObrigatorias;
+    this.objetivo = objetivo;
     this.panel = scene.add
       .rectangle(640, 60, 1232, 116, 0x10263d, 0.98)
       .setStrokeStyle(2, 0x315572, 1)
@@ -11,7 +12,7 @@ export class HUD {
       .setDepth(20);
 
     this.objectiveText = scene.add
-      .text(34, 20, "Objetivo: cuide do laboratório", {
+      .text(34, 20, this.formatarObjetivo(objetivo), {
         color: "#f4ffff",
         fontFamily: "Arial, sans-serif",
         fontSize: "24px",
@@ -53,6 +54,13 @@ export class HUD {
       .setDepth(21);
 
     this.update(perfil);
+  }
+
+  formatarObjetivo(objetivo) {
+    const texto = String(objetivo || "").trim();
+    return texto.toLowerCase().startsWith("objetivo:")
+      ? texto
+      : `Objetivo: ${texto || "complete a fase"}`;
   }
 
   update(perfil) {

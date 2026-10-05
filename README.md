@@ -1,11 +1,12 @@
 # Guardiões da Escola
 
-## Marco 2 — Fase 1 curta e completa
+## Marco 3 — Progressão e Fase 2
 
-Este repositório contém o segundo marco do jogo educativo 2D
-**Guardiões da Escola**. A Fase 1 agora é uma experiência curta e completa,
-com três situações interativas, progresso, conclusão e persistência local.
-O projeto usa JavaScript, Phaser 3, Vite e `localStorage`.
+Este repositório contém o terceiro marco do jogo educativo 2D
+**Guardiões da Escola**. A campanha agora conecta a Fase 1 — Laboratório à
+Fase 2 — Corredor depois do intervalo, com seleção de fases, progressão,
+conclusão e persistência local. O projeto usa JavaScript, Phaser 3, Vite e
+`localStorage`.
 
 ### Instalação e execução
 
@@ -27,46 +28,59 @@ Para executar os testes simples dos serviços:
 npm run test:backend
 ```
 
-### O que está implementado no Marco 2
+### O que está implementado no Marco 3
 
 - Menu principal com Novo Jogo e Continuar funcionais.
 - Criação, seleção e recuperação de perfis locais.
+- Tela de seleção com Fase 1 disponível, Fase 2 bloqueada ou disponível e
+  Fase 3 marcada como em desenvolvimento.
 - Fase 1 — Laboratório com personagem e movimentação por WASD/setas.
-- Três interações alcançáveis: computador, lixo e equipamento.
+- Fase 2 — Corredor depois do intervalo, liberada após concluir a Fase 1.
+- Três interações alcançáveis em cada fase, com IDs e escolhas exclusivos.
 - ChoiceDialog reutilizável com duas alternativas por situação.
 - ChoiceService aplicando consequências e bloqueando repetição ou alternativa oposta.
-- HUD com objetivo, perfil, cuidado, conduta e progresso de `0/3` a `3/3`.
+- HUD reutilizável com objetivo, perfil, cuidado, conduta e progresso de `0/3` a `3/3`.
 - Indicador textual `✓ RESOLVIDO` nos objetos já analisados.
-- Modal de conclusão após resolver as três situações.
-- ProgressionService liberando a fase seguinte e `StageResultScene` exibindo o resumo.
+- Modal de conclusão após resolver as três situações de cada fase.
+- `BaseStageScene` compartilhada por `Stage1Scene` e `Stage2Scene`.
+- `ProgressionService` controlando acesso, fases concluídas e `faseAtual`.
+- `StageResultScene` generalizada para exibir o resultado da fase concluída.
 - Salvamento após cada escolha e após a conclusão da fase.
-- Recuperação, após recarregar, das escolhas, pontuação e progresso (`faseAtual = 2`).
+- Recuperação, após recarregar, das escolhas, pontuação e progresso (`faseAtual = 2` ou `3`).
+- Rejogar uma fase concluída não duplica pontos nem a lista de fases concluídas.
 
-As instruções, configurações e créditos exibem apenas o aviso de que serão
-desenvolvidos em etapa futura. A Fase 2 ainda não é jogável; servidor, SQL,
-autenticação e final completo não fazem parte deste marco.
+Fase 3 aparece apenas como **Em desenvolvimento** e não possui gameplay neste
+marco. Servidor, SQL, autenticação, encerramento final e outras fases não fazem
+parte desta entrega.
 
-### Estrutura principal do Marco 2
+### Estrutura principal do Marco 3
 
 - `src/main.js`: configuração e inicialização do Phaser 3.
-- `src/data/`: perfis e catálogo de escolhas.
+- `src/data/`: perfis, catálogo de escolhas e configurações das fases.
 - `src/services/`: regras de escolhas e progressão.
 - `src/entities/`: personagem placeholder.
-- `src/scenes/`: menu, perfis, Fase 1 e resultado da fase.
+- `src/scenes/`: menu, perfis, seleção, fases jogáveis e resultados.
 - `src/ui/`: botões, HUD, prompt e diálogo de escolha reutilizável.
 
 ### Fluxo manual
 
 1. Abra o endereço informado pelo Vite e clique em **NOVO JOGO**.
 2. Digite um nome, clique em **CRIAR PERFIL** e depois em **INICIAR JOGO**.
-3. Na Fase 1, mova o personagem com WASD ou as setas até o computador, o lixo
+3. Na **SELEÇÃO DE FASES**, confirme que a Fase 1 está disponível, a Fase 2
+   bloqueada e a Fase 3 em desenvolvimento.
+4. Na Fase 1, mova o personagem com WASD ou as setas até o computador, o lixo
    e o equipamento.
-4. Quando aparecer `[E] Interagir`, pressione `E` e escolha uma alternativa.
-5. Confira a mensagem, o impacto, a pontuação e o progresso atualizados no HUD.
-6. Resolva as três situações para abrir o modal **FASE CONCLUÍDA**.
-7. Clique em **FINALIZAR FASE** e confira a `StageResultScene` com o resumo.
-8. Recarregue a página, clique em **CONTINUAR** e confirme que o resultado,
-   as escolhas, a pontuação e o desbloqueio da próxima fase permanecem salvos.
+5. Quando aparecer `[E] Interagir`, pressione `E`, escolha uma alternativa e
+   confira a mensagem, o impacto e o progresso no HUD.
+6. Resolva as três situações, clique em **FINALIZAR FASE** e confira o resumo.
+7. Na seleção, confirme que a Fase 2 foi liberada e jogue suas três situações:
+   lixo, líquido derramado e respeito entre colegas.
+8. Finalize a Fase 2, confira `faseAtual = 3` e que a Fase 3 continua marcada
+   como **Em desenvolvimento**.
+9. Recarregue a página, clique em **CONTINUAR** e confirme que a seleção,
+   pontuação, escolhas e fases concluídas permanecem salvas.
+10. Crie ou selecione outro perfil e confirme que o progresso dele começa em
+    `0/3`, sem compartilhar dados com o primeiro perfil.
 
 ### Testes
 
@@ -76,9 +90,10 @@ npm run test:backend
 npm run build
 ```
 
-Os testes cobrem as seis escolhas, alternativas mutuamente exclusivas,
-progresso `0/3` → `3/3`, conclusão da fase, persistência após salvar/carregar
-e independência entre os perfis João e Maria.
+Os 25 testes cobrem as escolhas das duas fases, alternativas mutuamente
+exclusivas, acesso e bloqueio, progresso `0/3` → `3/3`, conclusão e persistência
+da campanha, compatibilidade com save do Marco 2, replay sem pontuação duplicada
+e independência entre perfis.
 
 ## Objetivo final da estrutura
 
