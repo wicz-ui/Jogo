@@ -88,6 +88,51 @@ const FASE2_INTERACOES = [
   }
 ];
 
+const FASE3_INTERACOES = [
+  {
+    id: "fase3_maquina_01",
+    visual: "maquina",
+    label: "MÁQUINA",
+    x: 850,
+    y: 380,
+    raioInteracao: 135,
+    titulo: "Uso de Equipamento / Máquina",
+    mensagem: "A máquina está pronta para a atividade.\nO que deseja fazer?",
+    opcoes: [
+      { texto: "Seguir o procedimento correto", choiceId: "fase3_seguir_procedimento" },
+      { texto: "Usar de forma inadequada", choiceId: "fase3_usar_maquina_incorretamente" }
+    ]
+  },
+  {
+    id: "fase3_risco_01",
+    visual: "colega",
+    label: "COLEGA",
+    x: 450,
+    y: 520,
+    raioInteracao: 125,
+    titulo: "Proposta Arriscada",
+    mensagem: "Um colega propõe usar o equipamento de uma maneira arriscada.\nO que deseja fazer?",
+    opcoes: [
+      { texto: "Recusar e alertar sobre o risco", choiceId: "fase3_recusar_risco" },
+      { texto: "Aceitar a proposta", choiceId: "fase3_aceitar_risco" }
+    ]
+  },
+  {
+    id: "fase3_professor_01",
+    visual: "professor",
+    label: "PROFESSOR",
+    x: 300,
+    y: 280,
+    raioInteracao: 130,
+    titulo: "Orientação do Responsável",
+    mensagem: "O responsável orienta como utilizar o equipamento com segurança.\nO que deseja fazer?",
+    opcoes: [
+      { texto: "Respeitar a orientação", choiceId: "fase3_respeitar_orientacao" },
+      { texto: "Ignorar/desrespeitar a orientação", choiceId: "fase3_desrespeitar_orientacao" }
+    ]
+  }
+];
+
 export const FASE1_CONFIG = {
   numeroFase: 1,
   nome: "Laboratório",
@@ -131,9 +176,33 @@ export const FASE2_CONFIG = {
   interacoes: FASE2_INTERACOES
 };
 
+export const FASE3_CONFIG = {
+  numeroFase: 3,
+  nome: "Máquina e responsabilidade",
+  cabecalho: "FASE 3  •  MÁQUINA E RESPONSABILIDADE",
+  objetivo: "use os equipamentos com responsabilidade",
+  mensagemConclusao: "Você analisou todas as situações de responsabilidade com os equipamentos.",
+  jogadorInicial: { x: 230, y: 380 },
+  sala: {
+    backgroundColor: 0x1d2d3a,
+    gridColor: 0x30485c,
+    borderColor: 0x82b1ff,
+    destaque: "SALA DE\nMÁQUINAS",
+    destaqueX: 180,
+    destaqueY: 255
+  },
+  interacoesObrigatorias: [
+    "fase3_maquina_01",
+    "fase3_risco_01",
+    "fase3_professor_01"
+  ],
+  interacoes: FASE3_INTERACOES
+};
+
 export const STAGE_CONFIGS = {
   1: FASE1_CONFIG,
-  2: FASE2_CONFIG
+  2: FASE2_CONFIG,
+  3: FASE3_CONFIG
 };
 
 export function obterConfiguracaoFase(numeroFase) {
