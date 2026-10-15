@@ -1,12 +1,10 @@
 # Guardiões da Escola
 
-## Marco 3 — Progressão e Fase 2
+## Marco 4 — Fase 3 e conclusão da campanha
 
-Este repositório contém o terceiro marco do jogo educativo 2D
-**Guardiões da Escola**. A campanha agora conecta a Fase 1 — Laboratório à
-Fase 2 — Corredor depois do intervalo, com seleção de fases, progressão,
-conclusão e persistência local. O projeto usa JavaScript, Phaser 3, Vite e
-`localStorage`.
+O MVP agora contém três fases jogáveis, progressão em sequência e três finais
+calculados a partir da conduta e dos danos acumulados. O projeto usa
+JavaScript, Phaser 3, Vite e `localStorage`.
 
 ### Instalação e execução
 
@@ -15,190 +13,85 @@ npm install
 npm run dev
 ```
 
-Para gerar a versão de produção:
+Para gerar a versão de produção e executar os testes de lógica:
 
 ```bash
 npm run build
-npm run preview
-```
-
-Para executar os testes simples dos serviços:
-
-```bash
 npm run test:backend
 ```
 
-### O que está implementado no Marco 3
+### O que está implementado
 
-- Menu principal com Novo Jogo e Continuar funcionais.
-- Criação, seleção e recuperação de perfis locais.
-- Tela de seleção com Fase 1 disponível, Fase 2 bloqueada ou disponível e
-  Fase 3 marcada como em desenvolvimento.
-- Fase 1 — Laboratório com personagem e movimentação por WASD/setas.
-- Fase 2 — Corredor depois do intervalo, liberada após concluir a Fase 1.
-- Três interações alcançáveis em cada fase, com IDs e escolhas exclusivos.
-- ChoiceDialog reutilizável com duas alternativas por situação.
-- ChoiceService aplicando consequências e bloqueando repetição ou alternativa oposta.
-- HUD reutilizável com objetivo, perfil, cuidado, conduta e progresso de `0/3` a `3/3`.
-- Indicador textual `✓ RESOLVIDO` nos objetos já analisados.
-- Modal de conclusão após resolver as três situações de cada fase.
-- `BaseStageScene` compartilhada por `Stage1Scene` e `Stage2Scene`.
-- `ProgressionService` controlando acesso, fases concluídas e `faseAtual`.
-- `StageResultScene` generalizada para exibir o resultado da fase concluída.
-- Salvamento após cada escolha e após a conclusão da fase.
-- Recuperação, após recarregar, das escolhas, pontuação e progresso (`faseAtual = 2` ou `3`).
-- Rejogar uma fase concluída não duplica pontos nem a lista de fases concluídas.
+- Menu, perfis locais, seleção de fases e recuperação do perfil ativo.
+- Fase 1 — Laboratório; Fase 2 — Corredor depois do intervalo; e Fase 3 —
+  Máquina e responsabilidade.
+- `BaseStageScene` compartilhada pelas três fases, com movimentação, HUD,
+  proximidade, diálogo, escolhas, salvamento e conclusão.
+- `stagesData.js` como catálogo central de nomes, objetivos, cenas e interações.
+- `ProgressionService` valida acesso e conclusão na ordem 1 → 2 → 3.
+- `ChoiceService` aplica cuidado, conduta e danos, e impede resolver uma
+  interação mais de uma vez.
+- A Fase 3 apresenta máquina e procedimento, proposta arriscada de um colega e
+  orientação do professor/laboratorista.
+- Ao concluir a Fase 3, `EndingService` calcula e persiste o desfecho; a tela
+  `EndingScene` pode ser reaberta pela seleção após recarregar o jogo.
+- Os finais são **Guardião da Escola**, **Aprendeu e Reparou** e
+  **Responsabilização**. A mensagem de responsabilização é educativa e não
+  humilhante.
+- Saves do Marco 3 sem `campanhaConcluida` são normalizados para
+  `campanhaConcluida: false`; pontuação, danos, escolhas e desfecho são mantidos
+  por perfil.
+- Fases concluídas podem ser revisitadas, mas escolhas resolvidas não concedem
+  pontos ou danos novamente.
 
-Fase 3 aparece apenas como **Em desenvolvimento** e não possui gameplay neste
-marco. Servidor, SQL, autenticação, encerramento final e outras fases não fazem
-parte desta entrega.
+### Regra dos desfechos
 
-### Estrutura principal do Marco 3
+As regras são avaliadas nesta ordem:
 
-- `src/main.js`: configuração e inicialização do Phaser 3.
-- `src/data/`: perfis, catálogo de escolhas e configurações das fases.
-- `src/services/`: regras de escolhas e progressão.
-- `src/entities/`: personagem placeholder.
-- `src/scenes/`: menu, perfis, seleção, fases jogáveis e resultados.
-- `src/ui/`: botões, HUD, prompt e diálogo de escolha reutilizável.
+1. `danos >= 2` ou `conduta < -20` → **Responsabilização**.
+2. `conduta >= 60` e `danos <= 1` → **Guardião da Escola**.
+3. Qualquer outro resultado → **Aprendeu e Reparou**.
+
+### Estrutura principal
+
+- `src/data/ProfileRepository.js`: perfis locais e normalização de saves antigos.
+- `src/data/choicesData.js`: consequências das escolhas.
+- `src/data/stagesData.js`: configurações centralizadas das três fases.
+- `src/services/ChoiceService.js`: validação das interações e pontuação.
+- `src/services/ProgressionService.js`: acesso e conclusão sequencial.
+- `src/services/EndingService.js`: cálculo dos finais.
+- `src/scenes/BaseStageScene.js`: gameplay compartilhado.
+- `src/scenes/Stage1Scene.js`, `Stage2Scene.js`, `Stage3Scene.js`: cenas de fase
+  configuradas sobre a base.
+- `src/scenes/StageSelectScene.js`: fases, bloqueios e acesso ao final salvo.
+- `src/scenes/EndingScene.js`: desfecho e resumo da campanha.
+- `src/ui/HUD.js`: objetivo, perfil, progresso e pontuação; mostra danos na
+  Fase 3.
 
 ### Fluxo manual
 
-1. Abra o endereço informado pelo Vite e clique em **NOVO JOGO**.
-2. Digite um nome, clique em **CRIAR PERFIL** e depois em **INICIAR JOGO**.
-3. Na **SELEÇÃO DE FASES**, confirme que a Fase 1 está disponível, a Fase 2
-   bloqueada e a Fase 3 em desenvolvimento.
-4. Na Fase 1, mova o personagem com WASD ou as setas até o computador, o lixo
-   e o equipamento.
-5. Quando aparecer `[E] Interagir`, pressione `E`, escolha uma alternativa e
-   confira a mensagem, o impacto e o progresso no HUD.
-6. Resolva as três situações, clique em **FINALIZAR FASE** e confira o resumo.
-7. Na seleção, confirme que a Fase 2 foi liberada e jogue suas três situações:
-   lixo, líquido derramado e respeito entre colegas.
-8. Finalize a Fase 2, confira `faseAtual = 3` e que a Fase 3 continua marcada
-   como **Em desenvolvimento**.
-9. Recarregue a página, clique em **CONTINUAR** e confirme que a seleção,
-   pontuação, escolhas e fases concluídas permanecem salvas.
-10. Crie ou selecione outro perfil e confirme que o progresso dele começa em
-    `0/3`, sem compartilhar dados com o primeiro perfil.
+1. Inicie um perfil e confirme que apenas a Fase 1 está disponível.
+2. Conclua as três interações da Fase 1 para liberar a Fase 2.
+3. Conclua a Fase 2 para liberar **Máquina e responsabilidade**.
+4. Na Fase 3, resolva máquina, proposta arriscada e orientação. O progresso
+   deve avançar de `0/3` a `3/3`; confira Cuidado, Conduta e Danos no HUD.
+5. Finalize a campanha e confira a tela correspondente ao resultado das escolhas.
+6. Recarregue a página, clique em **CONTINUAR** e use **VER RESULTADO FINAL**
+   para reabrir o desfecho persistido.
+7. Crie outro perfil e confirme que progresso, escolhas, pontuação e final são
+   independentes.
 
 ### Testes
 
 ```bash
-npm install
 npm run test:backend
 npm run build
 ```
 
-Os 25 testes cobrem as escolhas das duas fases, alternativas mutuamente
-exclusivas, acesso e bloqueio, progresso `0/3` → `3/3`, conclusão e persistência
-da campanha, compatibilidade com save do Marco 2, replay sem pontuação duplicada
-e independência entre perfis.
+A suíte contém 44 testes dos Marcos 2, 3 e 4, cobrindo escolhas, sequência,
+danos, progresso, persistência, compatibilidade com saves anteriores, finais e
+independência entre perfis.
 
-## Objetivo final da estrutura
-
-guardioes-da-escola/
-
-├── public/
-
-│   └── assets/
-
-│       ├── images/               # Sprites de personagens, cenários e ícones (.png)
-
-│       ├── audio/                # Trilhas sonoras e efeitos cortados no Audacity (.mp3/.ogg)
-
-│       ├── maps/                 # Arquivos de mapas de azulejos (Tilemaps JSON)
-
-│       └── fonts/                # Fontes personalizadas para o projeto
-
-├── src/
-
-│   ├── main.js                   # Ponto de entrada, orquestrador e inicializador do Phaser
-
-│   ├── config/
-
-│   │   ├── gameConfig.js         # Configurações globais do motor Phaser (física, escala)
-
-│   │   └── constants.js          # Chaves de armazenamento, resoluções e metadados
-
-│   ├── events/
-
-│   │   └── GameEventBus.js       # Barramento centralizado para eventos do jogo (Event Emitter)
-
-│   ├── data/
-
-│   │   ├── ProfileRepository.js  # Classe base/contrato para persistência
-
-│   │   ├── LocalStorageProfileRepository.js # Implementação do salvamento local em texto
-
-│   │   ├── validators.js         # Validação de integridade de dados e nomes de perfil
-
-│   │   └── migrations.js         # Scripts sequenciais de atualização de schema (ex: v0 -> v1)
-
-│   ├── domain/
-
-│   │   ├── GameSessionService.js # Gerenciador do estado e sessões ativas em memória
-
-│   │   ├── ChoiceService.js      # Validador de regras de escolha e suas consequências
-
-│   │   ├── ScoreService.js       # Tratamento de pontos positivos/negativos e conduta
-
-│   │   ├── ProgressionService.js # Controle de fases desbloqueadas e checkpoints
-
-│   │   ├── EndingService.js      # Máquina de regras para cálculo do desfecho final
-
-│   │   └── interactionCatalog.js # Tabela/Catálogo oficial com os pesos de cada ação
-
-│   ├── scenes/
-
-│   │   ├── BootScene.js          # Inicialização rápida de sistemas e plugins
-
-│   │   ├── PreloadScene.js       # Carregamento de assets com barra de progresso visual
-
-│   │   ├── MainMenuScene.js      # Menu inicial (Novo jogo, Continuar, Opções, Créditos)
-
-│   │   ├── ProfileScene.js       # Tela para criação e seleção de perfis locais
-
-│   │   ├── StageSelectScene.js   # Menu de seleção de fases bloqueadas/desbloqueadas
-
-│   │   ├── Stage1Scene.js        # Gameplay da Fase 1 (ex: Laboratório)
-
-│   │   ├── Stage2Scene.js        # Gameplay da Fase 2
-
-│   │   ├── Stage3Scene.js        # Gameplay da Fase 3
-
-│   │   ├── StageResultScene.js   # Resumo de pontos e escolhas ao fim de um nível
-
-│   │   └── EndingScene.js        # Tela de encerramento com a mensagem educativa baseada na conduta
-
-│   └── ui/
-
-│       ├── GameButton.js         # Componente reutilizável com estados de foco e teclado
-
-│       ├── DialogueBox.js        # Caixa de diálogo com controle de velocidade do texto
-
-│       ├── HUD.js                # Painel fixo na tela exibindo pontuação e objetivos atuais
-
-│       └── ConfirmDialog.js      # Janela pop-up para confirmações destrutivas (ex: apagar perfil)
-
-├── tests/
-
-│   ├── unit/                     # Testes das regras puras da lógica de domínio (Jest/Vitest)
-
-│   ├── integration/              # Testes do ciclo salvar-carregar integrado com a sessão
-
-│   └── fixtures/                 # Amostras de dados controlados (saves limpos, corrompidos, antigos)
-
-├── docs/
-
-│   ├── architecture.md           # Desenho do fluxo entre cenas e serviços
-
-│   ├── data-model.md             # Especificação dos campos do arquivo JSON
-
-│   └── testing.md                # Roteiro manual para testes de regressão escolar
-
-├── .gitignore                    # Filtro para ignorar pastas como node_modules/ e arquivos locais
-
-├── package.json                  # Manifesto de dependências do Node.js e scripts de execução/build
-
-└── README.md                     # Manual de instalação e instruções para rodar o projeto localmente
+Este marco usa formas e personagens placeholder. Arte final, áudio completo,
+servidor, autenticação, nuvem, multiplayer e conteúdo adicional ficam para uma
+etapa posterior.

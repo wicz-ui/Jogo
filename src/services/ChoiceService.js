@@ -53,8 +53,9 @@ export class ChoiceService {
     }
 
     if (!perfil.pontuacao) {
-      perfil.pontuacao = { cuidado: 0, conduta: 0 };
+      perfil.pontuacao = { cuidado: 0, conduta: 0, danos: 0 };
     }
+    perfil.pontuacao.danos = Number(perfil.pontuacao.danos) || 0;
 
     // Impede a mesma escolha exata duas vezes
     const escolhaJaRegistrada = perfil.escolhasRealizadas.some((registro) => {
@@ -83,6 +84,7 @@ export class ChoiceService {
     // Aplicação das consequências na pontuação
     perfil.pontuacao.cuidado = (perfil.pontuacao.cuidado || 0) + escolha.cuidado;
     perfil.pontuacao.conduta = (perfil.pontuacao.conduta || 0) + escolha.conduta;
+    perfil.pontuacao.danos += Number(escolha.danos) || 0;
 
     // Registrar ação concluída
     perfil.escolhasRealizadas.push(choiceId);
@@ -90,7 +92,11 @@ export class ChoiceService {
     return {
       sucesso: true,
       mensagem: escolha.mensagem,
-      impacto: { cuidado: escolha.cuidado, conduta: escolha.conduta },
+      impacto: {
+        cuidado: escolha.cuidado,
+        conduta: escolha.conduta,
+        danos: Number(escolha.danos) || 0
+      },
       perfil
     };
   }

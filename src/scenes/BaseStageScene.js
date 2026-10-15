@@ -5,6 +5,7 @@ import {
 } from "../data/ProfileRepository.js";
 import { ChoiceService } from "../services/ChoiceService.js";
 import { ProgressionService } from "../services/ProgressionService.js";
+import { EndingService } from "../services/EndingService.js";
 import Player from "../entities/Player.js";
 import { ChoiceDialog } from "../ui/ChoiceDialog.js";
 import { HUD } from "../ui/HUD.js";
@@ -19,7 +20,7 @@ const SALA_PADRAO = {
 };
 
 /**
- * Infraestrutura compartilhada pelas fases jogáveis do Marco 3.
+ * Infraestrutura compartilhada pelas fases jogáveis da campanha.
  * As subclasses fornecem somente a configuração e o tema da fase.
  */
 export class BaseStageScene extends Phaser.Scene {
@@ -62,7 +63,8 @@ export class BaseStageScene extends Phaser.Scene {
       this,
       this.perfil,
       this.stageConfig.interacoesObrigatorias,
-      this.stageConfig.objetivo
+      this.stageConfig.objetivo,
+      this.stageConfig.exibirDanos === true
     );
     this.criarObjetosInterativos();
 
@@ -258,6 +260,46 @@ export class BaseStageScene extends Phaser.Scene {
       visual.extra = alerta;
       visual.rotuloY = 70;
       visual.statusY = 102;
+    } else if (interacao.visual === "maquina") {
+      const sombra = this.add.ellipse(0, 54, 190, 30, 0x071522, 0.5);
+      const gabinete = this.add
+        .rectangle(0, 0, 145, 155, 0x657987, 1)
+        .setStrokeStyle(4, 0xc5d4db, 1);
+      const painel = this.add
+        .rectangle(0, -28, 94, 55, 0x183848, 1)
+        .setStrokeStyle(3, 0x9fe6e5, 1);
+      const visor = this.add.rectangle(0, -28, 72, 34, 0x287d88, 1);
+      const botao = this.add.circle(0, 37, 13, 0xf0b44d, 1).setStrokeStyle(3, 0xffe7a3, 1);
+      const base = this.add.rectangle(0, 83, 180, 16, 0x334653, 1);
+
+      grupo.add([sombra, gabinete, painel, visor, botao, base]);
+      visual.base = gabinete;
+      visual.acento = visor;
+      visual.rotuloY = 112;
+      visual.statusY = 144;
+    } else if (interacao.visual === "responsavel") {
+      const sombra = this.add.ellipse(0, 45, 150, 25, 0x071522, 0.5);
+      const corpo = this.add
+        .rectangle(0, 10, 62, 82, 0x5377a1, 1)
+        .setStrokeStyle(3, 0xc4e6ff, 1);
+      const cabeca = this.add.circle(0, -48, 24, 0xe0a477, 1);
+      const prancheta = this.add
+        .rectangle(41, 15, 32, 42, 0xf0d58a, 1)
+        .setStrokeStyle(2, 0xffefbd, 1);
+      const orientacao = this.add
+        .text(0, -83, "ORIENTAÇÃO", {
+          color: "#f4ffff",
+          fontFamily: "Arial, sans-serif",
+          fontSize: "13px",
+          fontStyle: "bold"
+        })
+        .setOrigin(0.5);
+
+      grupo.add([sombra, corpo, cabeca, prancheta, orientacao]);
+      visual.base = corpo;
+      visual.acento = prancheta;
+      visual.rotuloY = 78;
+      visual.statusY = 110;
     } else {
       const sombra = this.add.ellipse(0, 45, 180, 28, 0x071522, 0.5);
       const colegaUm = this.add
@@ -312,7 +354,7 @@ export class BaseStageScene extends Phaser.Scene {
       .setStrokeStyle(3, 0x9ff5b5, 1)
       .setDepth(61);
     this.conclusaoTitulo = this.add
-      .text(640, 255, "FASE CONCLUÍDA", {
+      .text(640, 255, this.stageConfig.tituloConclusao || "FASE CONCLUÍDA", {
         color: "#9ff5b5",
         fontFamily: "Arial, sans-serif",
         fontSize: "38px",
@@ -334,7 +376,7 @@ export class BaseStageScene extends Phaser.Scene {
       this,
       640,
       450,
-      "FINALIZAR FASE",
+      this.stageConfig.botaoConclusao || "FINALIZAR FASE",
       () => this.finalizarFase(),
       { width: 310, height: 60, fontSize: "21px", color: 0x287d5b }
     ).setDepth(62);
@@ -387,7 +429,16 @@ export class BaseStageScene extends Phaser.Scene {
       return;
     }
 
-    this.perfil = salvarPerfil(resultado);
+    this.perfil = resultado;
+    if (this.stageConfig.numeroFase === 3) {
+      const desfecho = EndingService.calcularDesfecho(this.perfil);
+      this.perfil.desfecho = desfecho.id;
+      this.perfil = salvarPerfil(this.perfil);
+      this.scene.start("EndingScene", { perfil: this.perfil });
+      return;
+    }
+
+    this.perfil = salvarPerfil(this.perfil);
     this.scene.start("StageResultScene", {
       perfil: this.perfil,
       stageNumber: this.stageConfig.numeroFase
@@ -419,6 +470,12 @@ export class BaseStageScene extends Phaser.Scene {
       return;
     }
 
+    if (interacao.visual === "maquina") {
+      visual.base.setFillStyle(!resolvida ? 0x657987 : escolhaPositiva ? 0x287d5b : 0x80533b);
+      visual.acento.setFillStyle(!resolvida ? 0x287d88 : escolhaPositiva ? 0x52b87e : 0x9e6846);
+      return;
+    }
+
     if (resolvida) {
       visual.base?.setFillStyle(escolhaPositiva ? 0x287d5b : 0x80533b);
       visual.acento?.setFillStyle(escolhaPositiva ? 0x52b87e : 0x9e6846);
@@ -428,7 +485,9 @@ export class BaseStageScene extends Phaser.Scene {
         lixo: [0x5e6870, 0x303a42],
         equipamento: [0xc28545, 0xe1a15d],
         liquido: [0x42b7c8, 0xe1ad4c],
-        respeito: [0xc86a68, 0x68a9d4]
+        respeito: [0xc86a68, 0x68a9d4],
+        colegas: [0xc86a68, 0x68a9d4],
+        responsavel: [0x5377a1, 0xf0d58a]
       }[interacao.visual] || [0x5e6870, 0x303a42];
       visual.base?.setFillStyle(cores[0]);
       visual.acento?.setFillStyle(cores[1]);
@@ -494,9 +553,12 @@ export class BaseStageScene extends Phaser.Scene {
     const impacto = resultado.impacto;
     const cuidado = impacto.cuidado >= 0 ? `+${impacto.cuidado}` : `${impacto.cuidado}`;
     const conduta = impacto.conduta >= 0 ? `+${impacto.conduta}` : `${impacto.conduta}`;
+    const danos = impacto.danos >= 0 ? `+${impacto.danos}` : `${impacto.danos}`;
     this.statusText.setText(
-      `${resultado.mensagem}\n${cuidado} cuidado  •  ${conduta} conduta\n` +
-      `Agora: Cuidado ${this.perfil.pontuacao.cuidado}  •  Conduta ${this.perfil.pontuacao.conduta}`
+      `${resultado.mensagem}\n${cuidado} cuidado  •  ${conduta} conduta` +
+      (this.stageConfig.exibirDanos ? `  •  ${danos} danos` : "") +
+      `\nAgora: Cuidado ${this.perfil.pontuacao.cuidado}  •  Conduta ${this.perfil.pontuacao.conduta}` +
+      (this.stageConfig.exibirDanos ? `  •  Danos ${this.perfil.pontuacao.danos}` : "")
     );
 
     if (this.progressoFase.faseConcluida) {

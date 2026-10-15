@@ -49,7 +49,8 @@ function criarPerfilBase(nome) {
     },
     progresso: {
       faseAtual: 1,
-      fasesConcluidas: []
+      fasesConcluidas: [],
+      campanhaConcluida: false
     },
     escolhasRealizadas: []
   };
@@ -69,8 +70,12 @@ function normalizarPerfil(perfil) {
     faseAtual: Number(perfilSeguro.progresso?.faseAtual) || 1,
     fasesConcluidas: Array.isArray(perfilSeguro.progresso?.fasesConcluidas)
       ? [...perfilSeguro.progresso.fasesConcluidas]
-      : []
+      : [],
+    campanhaConcluida: perfilSeguro.progresso?.campanhaConcluida === true
   };
+  if (typeof perfilSeguro.desfecho !== "string") {
+    delete perfilSeguro.desfecho;
+  }
   perfilSeguro.escolhasRealizadas = Array.isArray(perfilSeguro.escolhasRealizadas)
     ? [...perfilSeguro.escolhasRealizadas]
     : [];

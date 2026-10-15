@@ -113,4 +113,64 @@ export const CHOICES = {
     conduta: -8,
     mensagem: "A situação de desrespeito foi ignorada e continuou sem apoio."
   },
+
+  // Interação 7: uso correto da máquina na Fase 3
+  fase3_seguir_procedimento: {
+    id: "fase3_seguir_procedimento",
+    interacaoId: "fase3_maquina_01",
+    tipo: "positiva",
+    cuidado: 10,
+    conduta: 8,
+    danos: 0,
+    mensagem: "Você seguiu o procedimento e preparou a máquina com segurança."
+  },
+  fase3_usar_maquina_incorretamente: {
+    id: "fase3_usar_maquina_incorretamente",
+    interacaoId: "fase3_maquina_01",
+    tipo: "negativa",
+    cuidado: 0,
+    conduta: -15,
+    danos: 1,
+    mensagem: "O uso incorreto causou um dano que precisará ser reparado."
+  },
+
+  // Interação 8: proposta de uso arriscado
+  fase3_recusar_risco: {
+    id: "fase3_recusar_risco",
+    interacaoId: "fase3_risco_01",
+    tipo: "positiva",
+    cuidado: 8,
+    conduta: 10,
+    danos: 0,
+    mensagem: "Você recusou a proposta e alertou o colega sobre o risco."
+  },
+  fase3_aceitar_risco: {
+    id: "fase3_aceitar_risco",
+    interacaoId: "fase3_risco_01",
+    tipo: "negativa",
+    cuidado: 0,
+    conduta: -15,
+    danos: 1,
+    mensagem: "A escolha arriscada provocou um dano ao equipamento."
+  },
+
+  // Interação 9: orientação do professor/laboratorista
+  fase3_respeitar_orientacao: {
+    id: "fase3_respeitar_orientacao",
+    interacaoId: "fase3_professor_01",
+    tipo: "positiva",
+    cuidado: 8,
+    conduta: 10,
+    danos: 0,
+    mensagem: "Você respeitou a orientação e usou o equipamento com segurança."
+  },
+  fase3_desrespeitar_orientacao: {
+    id: "fase3_desrespeitar_orientacao",
+    interacaoId: "fase3_professor_01",
+    tipo: "negativa",
+    cuidado: 0,
+    conduta: -10,
+    danos: 0,
+    mensagem: "Você ignorou a orientação e precisará conversar sobre segurança."
+  },
 };

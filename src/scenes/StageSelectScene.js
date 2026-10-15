@@ -1,13 +1,9 @@
 import Phaser from "phaser";
 import { carregarPerfilAtivo } from "../data/ProfileRepository.js";
+import { LISTA_FASES } from "../data/stagesData.js";
+import { EndingService } from "../services/EndingService.js";
 import { ProgressionService } from "../services/ProgressionService.js";
 import { criarBotao } from "../ui/GameButton.js";
-
-const FASES = [
-  { numero: 1, titulo: "FASE 1", nome: "Laboratório", cena: "Stage1Scene" },
-  { numero: 2, titulo: "FASE 2", nome: "Corredor depois do intervalo", cena: "Stage2Scene" },
-  { numero: 3, titulo: "FASE 3", nome: "Próxima etapa", cena: null }
-];
 
 const STATUS = {
   concluida: { texto: "✓ CONCLUÍDA", cor: "#9ff5b5", botao: "JOGAR NOVAMENTE" },
@@ -43,7 +39,7 @@ export class StageSelectScene extends Phaser.Scene {
       .setStrokeStyle(3, 0x2f6b83, 1);
 
     this.add
-      .text(640, 78, "SELEÇÃO DE FASES", {
+      .text(640, 65, "SELEÇÃO DE FASES", {
         color: "#f4ffff",
         fontFamily: "Arial, sans-serif",
         fontSize: "40px",
@@ -51,32 +47,69 @@ export class StageSelectScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     this.add
-      .text(640, 125, `Perfil: ${this.perfil.nome}`, {
+      .text(640, 112, `Perfil: ${this.perfil.nome}`, {
         color: "#9fe6e5",
         fontFamily: "Arial, sans-serif",
         fontSize: "20px"
       })
       .setOrigin(0.5);
 
-    this.feedbackText = this.add
-      .text(640, 615, this.aviso || "Escolha uma fase para continuar.", {
-        color: this.aviso ? "#ffcf9f" : "#c6e9ee",
-        fontFamily: "Arial, sans-serif",
-        fontSize: "18px",
-        align: "center",
-        wordWrap: { width: 960 }
-      })
-      .setOrigin(0.5);
+    if (this.perfil.progresso?.campanhaConcluida) {
+      const desfecho = EndingService.obterDesfecho(this.perfil.desfecho);
+      this.add
+        .text(
+          640,
+          153,
+          `CAMPANHA CONCLUÍDA${desfecho ? `  •  FINAL: ${desfecho.titulo}` : ""}`,
+          {
+            color: "#9ff5b5",
+            fontFamily: "Arial, sans-serif",
+            fontSize: "18px",
+            fontStyle: "bold",
+            align: "center",
+            wordWrap: { width: 1000 }
+          }
+        )
+        .setOrigin(0.5);
+    }
 
-    FASES.forEach((fase, index) => this.criarCard(fase, index));
+    LISTA_FASES.forEach((fase, index) => this.criarCard(fase, index));
+
+    if (this.perfil.progresso?.campanhaConcluida) {
+      this.finalButton = criarBotao(
+        this,
+        640,
+        575,
+        "VER RESULTADO FINAL",
+        () => this.scene.start("EndingScene", { perfil: this.perfil }),
+        { width: 330, height: 52, fontSize: "19px", color: 0x287d5b }
+      );
+    }
+
+    this.feedbackText = this.add
+      .text(
+        640,
+        630,
+        this.aviso || (this.perfil.progresso?.campanhaConcluida
+          ? "Você pode rever seu desfecho a qualquer momento."
+          : "Escolha uma fase para continuar."),
+        {
+          color: this.aviso ? "#ffcf9f" : "#c6e9ee",
+          fontFamily: "Arial, sans-serif",
+          fontSize: "18px",
+          align: "center",
+          wordWrap: { width: 960 }
+        }
+      )
+      .setOrigin(0.5);
 
     criarBotao(
       this,
       640,
-      680,
+      684,
       "MENU PRINCIPAL",
       () => this.scene.start("MainMenuScene"),
-      { width: 270, height: 46, fontSize: "18px", color: 0x287d5b }
+      { width: 270, height: 44, fontSize: "18px", color: 0x287d5b }
     );
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.limparBotoes, this);
@@ -84,15 +117,15 @@ export class StageSelectScene extends Phaser.Scene {
 
   criarCard(fase, index) {
     const x = 260 + index * 380;
-    const statusId = ProgressionService.obterStatusFase(this.perfil, fase.numero);
-    const status = STATUS[statusId];
+    const statusId = ProgressionService.obterStatusFase(this.perfil, fase.numeroFase);
+    const status = STATUS[statusId] || STATUS.em_desenvolvimento;
     const acessivel = statusId === "disponivel" || statusId === "concluida";
 
     this.add
-      .rectangle(x, 355, 330, 350, 0x0b2034, 1)
+      .rectangle(x, 350, 330, 345, 0x0b2034, 1)
       .setStrokeStyle(2, acessivel ? 0x7ed6df : 0x315572, 1);
     this.add
-      .text(x, 225, fase.titulo, {
+      .text(x, 212, fase.titulo || `FASE ${fase.numeroFase}`, {
         color: "#f4ffff",
         fontFamily: "Arial, sans-serif",
         fontSize: "29px",
@@ -100,7 +133,7 @@ export class StageSelectScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     this.add
-      .text(x, 275, fase.nome, {
+      .text(x, 265, fase.nome, {
         color: "#c6e9ee",
         fontFamily: "Arial, sans-serif",
         fontSize: "19px",
@@ -109,7 +142,7 @@ export class StageSelectScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     this.add
-      .text(x, 335, status.texto, {
+      .text(x, 325, status.texto, {
         color: status.cor,
         fontFamily: "Arial, sans-serif",
         fontSize: "19px",
@@ -122,7 +155,7 @@ export class StageSelectScene extends Phaser.Scene {
     const button = criarBotao(
       this,
       x,
-      455,
+      420,
       status.botao,
       () => this.selecionarFase(fase, statusId),
       {
@@ -137,11 +170,14 @@ export class StageSelectScene extends Phaser.Scene {
     if (!acessivel) {
       button.disableInteractive();
     }
-
     this.cardButtons.push(button);
 
+    const etapasAnteriores = Array.from(
+      { length: Math.max(0, fase.numeroFase - 1) },
+      (_, i) => `Fase ${i + 1}`
+    );
     const detalhe = statusId === "bloqueada"
-      ? "Conclua a Fase 1 para desbloquear."
+      ? `Conclua ${etapasAnteriores.join(" e ")} para desbloquear.`
       : statusId === "em_desenvolvimento"
         ? "Disponível em uma próxima etapa."
         : statusId === "concluida"
@@ -149,7 +185,7 @@ export class StageSelectScene extends Phaser.Scene {
           : "Fase liberada para jogar.";
 
     this.add
-      .text(x, 540, detalhe, {
+      .text(x, 490, detalhe, {
         color: "#8ab7c5",
         fontFamily: "Arial, sans-serif",
         fontSize: "16px",
@@ -160,11 +196,11 @@ export class StageSelectScene extends Phaser.Scene {
   }
 
   selecionarFase(fase, statusId) {
-    if (!fase.cena || (statusId !== "disponivel" && statusId !== "concluida")) {
+    if (!fase.sceneKey || (statusId !== "disponivel" && statusId !== "concluida")) {
       return;
     }
 
-    this.scene.start(fase.cena, { perfil: this.perfil });
+    this.scene.start(fase.sceneKey, { perfil: this.perfil });
   }
 
   limparBotoes() {

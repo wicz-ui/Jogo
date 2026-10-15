@@ -88,9 +88,57 @@ const FASE2_INTERACOES = [
   }
 ];
 
+const FASE3_INTERACOES = [
+  {
+    id: "fase3_maquina_01",
+    visual: "maquina",
+    label: "MÁQUINA",
+    x: 940,
+    y: 310,
+    raioInteracao: 135,
+    titulo: "Máquina e procedimento",
+    mensagem: "A máquina está pronta para a atividade.\nO que deseja fazer?",
+    opcoes: [
+      { texto: "Seguir o procedimento correto", choiceId: "fase3_seguir_procedimento" },
+      { texto: "Usar de forma inadequada", choiceId: "fase3_usar_maquina_incorretamente" }
+    ]
+  },
+  {
+    id: "fase3_risco_01",
+    visual: "colegas",
+    label: "PROPOSTA ARRISCADA",
+    x: 405,
+    y: 505,
+    raioInteracao: 135,
+    titulo: "Uma proposta arriscada",
+    mensagem: "Um colega propõe usar o equipamento\nde uma maneira arriscada.\nO que deseja fazer?",
+    opcoes: [
+      { texto: "Recusar e alertar sobre o risco", choiceId: "fase3_recusar_risco" },
+      { texto: "Aceitar a proposta", choiceId: "fase3_aceitar_risco" }
+    ]
+  },
+  {
+    id: "fase3_professor_01",
+    visual: "responsavel",
+    label: "ORIENTAÇÃO",
+    x: 720,
+    y: 345,
+    raioInteracao: 135,
+    titulo: "Orientação do responsável",
+    mensagem: "O professor/laboratorista orienta como\nutilizar o equipamento com segurança.\nO que deseja fazer?",
+    opcoes: [
+      { texto: "Respeitar a orientação", choiceId: "fase3_respeitar_orientacao" },
+      { texto: "Ignorar/desrespeitar a orientação", choiceId: "fase3_desrespeitar_orientacao" }
+    ]
+  }
+];
+
 export const FASE1_CONFIG = {
   numeroFase: 1,
+  titulo: "FASE 1",
   nome: "Laboratório",
+  sceneKey: "Stage1Scene",
+  statusPadrao: "disponivel",
   cabecalho: "FASE 1  •  LABORATÓRIO",
   objetivo: "cuide do laboratório",
   mensagemConclusao: "Você analisou todas as situações do laboratório.",
@@ -109,7 +157,10 @@ export const FASE1_CONFIG = {
 
 export const FASE2_CONFIG = {
   numeroFase: 2,
+  titulo: "FASE 2",
   nome: "Corredor depois do intervalo",
+  sceneKey: "Stage2Scene",
+  statusPadrao: "bloqueada",
   cabecalho: "FASE 2  •  CORREDOR DEPOIS DO INTERVALO",
   objetivo: "ajude a tornar o corredor seguro",
   mensagemConclusao: "Você analisou todas as situações do corredor.",
@@ -131,10 +182,42 @@ export const FASE2_CONFIG = {
   interacoes: FASE2_INTERACOES
 };
 
+export const FASE3_CONFIG = {
+  numeroFase: 3,
+  titulo: "FASE 3",
+  nome: "Máquina e responsabilidade",
+  sceneKey: "Stage3Scene",
+  statusPadrao: "bloqueada",
+  cabecalho: "FASE 3  •  MÁQUINA E RESPONSABILIDADE",
+  objetivo: "use os equipamentos com responsabilidade",
+  tituloConclusao: "FASE CONCLUÍDA",
+  mensagemConclusao: "Você concluiu a última etapa da campanha.",
+  botaoConclusao: "FINALIZAR CAMPANHA",
+  exibirDanos: true,
+  jogadorInicial: { x: 230, y: 430 },
+  sala: {
+    backgroundColor: 0x263b4e,
+    gridColor: 0x496276,
+    borderColor: 0xf0b44d,
+    destaque: "MÁQUINAS\nE SEGURANÇA",
+    destaqueX: 180,
+    destaqueY: 255
+  },
+  interacoesObrigatorias: [
+    "fase3_maquina_01",
+    "fase3_risco_01",
+    "fase3_professor_01"
+  ],
+  interacoes: FASE3_INTERACOES
+};
+
 export const STAGE_CONFIGS = {
   1: FASE1_CONFIG,
-  2: FASE2_CONFIG
+  2: FASE2_CONFIG,
+  3: FASE3_CONFIG
 };
+
+export const LISTA_FASES = Object.values(STAGE_CONFIGS);
 
 export function obterConfiguracaoFase(numeroFase) {
   return STAGE_CONFIGS[numeroFase] || null;

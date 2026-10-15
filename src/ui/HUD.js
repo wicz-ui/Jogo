@@ -1,10 +1,17 @@
 import { ChoiceService } from "../services/ChoiceService.js";
 
 export class HUD {
-  constructor(scene, perfil, listaInteracoesObrigatorias = [], objetivo = "") {
+  constructor(
+    scene,
+    perfil,
+    listaInteracoesObrigatorias = [],
+    objetivo = "",
+    exibirDanos = false
+  ) {
     this.scene = scene;
     this.listaInteracoesObrigatorias = listaInteracoesObrigatorias;
     this.objetivo = objetivo;
+    this.exibirDanos = exibirDanos;
     this.panel = scene.add
       .rectangle(640, 60, 1232, 116, 0x10263d, 0.98)
       .setStrokeStyle(2, 0x315572, 1)
@@ -71,9 +78,14 @@ export class HUD {
     );
     this.profileText.setText(`Perfil: ${perfil?.nome || "Jogador"}`);
     this.progressText.setText(`Progresso: ${progresso.texto}`);
-    this.scoreText.setText(
-      `Cuidado: ${Number(pontuacao.cuidado) || 0}\nConduta: ${Number(pontuacao.conduta) || 0}`
-    );
+    const linhasPontuacao = [
+      `Cuidado: ${Number(pontuacao.cuidado) || 0}`,
+      `Conduta: ${Number(pontuacao.conduta) || 0}`
+    ];
+    if (this.exibirDanos) {
+      linhasPontuacao.push(`Danos: ${Number(pontuacao.danos) || 0}`);
+    }
+    this.scoreText.setText(linhasPontuacao.join("\n"));
   }
 
   destroy() {
