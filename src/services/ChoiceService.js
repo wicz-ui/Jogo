@@ -1,4 +1,5 @@
 import { CHOICES } from '../data/choicesData.js';
+import { ProgressionService } from './ProgressionService.js';
 
 export class ChoiceService {
   /**
@@ -16,7 +17,7 @@ export class ChoiceService {
   }
 
   /**
-   * Retorna o progresso atual das interações obrigatorias da fase (ex: "1/3", "3/3")
+   * Retorna o progresso atual das interações obrigatórias da fase (ex: "1/3", "3/3")
    * e indica se todas foram resolvidas.
    */
   static obterProgressoFase(perfil, listaInteracoesObrigatorias = []) {
@@ -39,7 +40,7 @@ export class ChoiceService {
   }
 
   /**
-   * Processa a escolha feita pelo jogador e atualiza os dados do perfil.
+   * Processa a escolha feita pelo jogador e atualiza os dados do perfil (incluindo cuidado, conduta e danos).
    */
   static registrarEscolha(perfil, choiceId) {
     const escolha = CHOICES[choiceId];
@@ -48,14 +49,11 @@ export class ChoiceService {
       return { sucesso: false, erro: "Escolha inválida ou não encontrada." };
     }
 
+    ProgressionService.normalizarPerfil(perfil);
+
     if (!Array.isArray(perfil.escolhasRealizadas)) {
       perfil.escolhasRealizadas = [];
     }
-
-    if (!perfil.pontuacao) {
-      perfil.pontuacao = { cuidado: 0, conduta: 0, danos: 0 };
-    }
-    perfil.pontuacao.danos = Number(perfil.pontuacao.danos) || 0;
 
     // Impede a mesma escolha exata duas vezes
     const escolhaJaRegistrada = perfil.escolhasRealizadas.some((registro) => {
@@ -71,7 +69,6 @@ export class ChoiceService {
       };
     }
 
-    // Impede responder a mesma interação mais de uma vez
     if (escolha.interacaoId && this.interacaoConcluida(perfil, escolha.interacaoId)) {
       return {
         sucesso: false,
@@ -82,11 +79,10 @@ export class ChoiceService {
     }
 
     // Aplicação das consequências na pontuação
-    perfil.pontuacao.cuidado = (perfil.pontuacao.cuidado || 0) + escolha.cuidado;
-    perfil.pontuacao.conduta = (perfil.pontuacao.conduta || 0) + escolha.conduta;
+    perfil.pontuacao.cuidado += Number(escolha.cuidado) || 0;
+    perfil.pontuacao.conduta += Number(escolha.conduta) || 0;
     perfil.pontuacao.danos += Number(escolha.danos) || 0;
 
-    // Registrar ação concluída
     perfil.escolhasRealizadas.push(choiceId);
 
     return {
