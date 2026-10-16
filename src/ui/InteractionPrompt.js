@@ -1,15 +1,15 @@
+import { pixelTextStyle } from "./TextStyles.js";
+
 export class InteractionPrompt {
   constructor(scene, x, y) {
     this.background = scene.add
       .rectangle(0, 0, 230, 48, 0x174f68, 1)
       .setStrokeStyle(2, 0x9ce9e8, 1);
     this.text = scene.add
-      .text(0, 0, "[E] Interagir", {
-        color: "#ffffff",
-        fontFamily: "Arial, sans-serif",
+      .text(0, 0, "[E] Interagir", pixelTextStyle({
         fontSize: "20px",
         fontStyle: "bold"
-      })
+      }))
       .setOrigin(0.5);
     this.container = scene.add
       .container(x, y, [this.background, this.text])

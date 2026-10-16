@@ -3,6 +3,7 @@ import { carregarPerfilAtivo } from "../data/ProfileRepository.js";
 import { ChoiceService } from "../services/ChoiceService.js";
 import { obterConfiguracaoFase } from "../data/stagesData.js";
 import { criarBotao } from "../ui/GameButton.js";
+import { pixelTextStyle } from "../ui/TextStyles.js";
 
 export class StageResultScene extends Phaser.Scene {
   constructor() {
@@ -33,23 +34,19 @@ export class StageResultScene extends Phaser.Scene {
       .setStrokeStyle(3, 0x8fe6e4, 1);
 
     this.add
-      .text(640, 120, `FASE ${this.stageConfig.numeroFase} CONCLUÍDA`, {
-        color: "#f4ffff",
-        fontFamily: "Arial, sans-serif",
+      .text(640, 120, `FASE ${this.stageConfig.numeroFase} CONCLUÍDA`, pixelTextStyle({
         fontSize: "44px",
         fontStyle: "bold",
         align: "center"
-      })
+      }))
       .setOrigin(0.5);
 
     this.add
-      .text(640, 190, this.stageConfig.mensagemConclusao, {
-        color: "#9fe6e5",
-        fontFamily: "Arial, sans-serif",
+      .text(640, 190, this.stageConfig.mensagemConclusao, pixelTextStyle({
         fontSize: "22px",
         align: "center",
         wordWrap: { width: 700 }
-      })
+      }))
       .setOrigin(0.5);
 
     this.add
@@ -57,24 +54,20 @@ export class StageResultScene extends Phaser.Scene {
         640,
         305,
         `Perfil: ${this.perfil.nome}\n\nCuidado: ${Number(pontuacao.cuidado) || 0}\nConduta: ${Number(pontuacao.conduta) || 0}\n\nSituações analisadas: ${progresso.texto}`,
-        {
-          color: "#ffffff",
-          fontFamily: "Arial, sans-serif",
+        pixelTextStyle({
           fontSize: "25px",
           align: "center",
           lineSpacing: 7
-        }
+        })
       )
       .setOrigin(0.5);
 
     this.feedbackText = this.add
-      .text(640, 495, "Seu progresso foi salvo. Escolha a próxima etapa.", {
-        color: "#c6e9ee",
-        fontFamily: "Arial, sans-serif",
+      .text(640, 495, "Seu progresso foi salvo. Escolha a próxima etapa.", pixelTextStyle({
         fontSize: "18px",
         align: "center",
         wordWrap: { width: 650 }
-      })
+      }))
       .setOrigin(0.5);
 
     criarBotao(

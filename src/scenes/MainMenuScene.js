@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { carregarPerfilAtivo } from "../data/ProfileRepository.js";
 import { criarBotaoImagem } from "../ui/ImageButton.js";
+import { pixelTextStyle } from "../ui/TextStyles.js";
 
 const IMAGENS_MENU = {
   logo: "/assets/images/BannerLogo.png",
@@ -136,14 +137,10 @@ export class MainMenuScene extends Phaser.Scene {
 
     const { width, height } = this.cameras.main;
     const aviso = this.add
-      .text(width / 2, height - 28, mensagem, {
-        color: "#ffffff",
-        fontFamily: "Arial, sans-serif",
+      .text(width / 2, height - 28, mensagem, pixelTextStyle({
         fontSize: "16px",
         align: "center",
-        stroke: "#101010",
-        strokeThickness: 4
-      })
+      }))
       .setOrigin(0.5)
       .setAlpha(0)
       .setDepth(3);

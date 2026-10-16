@@ -1,4 +1,5 @@
 import { ChoiceService } from "../services/ChoiceService.js";
+import { pixelTextStyle } from "./TextStyles.js";
 
 export class HUD {
   constructor(
@@ -19,43 +20,35 @@ export class HUD {
       .setDepth(20);
 
     this.objectiveText = scene.add
-      .text(34, 20, this.formatarObjetivo(objetivo), {
-        color: "#f4ffff",
-        fontFamily: "Arial, sans-serif",
+      .text(34, 20, this.formatarObjetivo(objetivo), pixelTextStyle({
         fontSize: "24px",
         fontStyle: "bold"
-      })
+      }))
       .setScrollFactor(0)
       .setDepth(21);
 
     this.progressText = scene.add
-      .text(34, 55, "Progresso: 0/3", {
-        color: "#9fe6e5",
-        fontFamily: "Arial, sans-serif",
+      .text(34, 55, "Progresso: 0/3", pixelTextStyle({
         fontSize: "20px",
         fontStyle: "bold"
-      })
+      }))
       .setScrollFactor(0)
       .setDepth(21);
 
     this.profileText = scene.add
-      .text(34, 87, "", {
-        color: "#b8d7e5",
-        fontFamily: "Arial, sans-serif",
+      .text(34, 87, "", pixelTextStyle({
         fontSize: "18px"
-      })
+      }))
       .setScrollFactor(0)
       .setDepth(21);
 
     this.scoreText = scene.add
-      .text(930, 23, "", {
-        color: "#f4ffff",
-        fontFamily: "Arial, sans-serif",
+      .text(930, 23, "", pixelTextStyle({
         fontSize: "21px",
         fontStyle: "bold",
         align: "right",
         fixedWidth: 230
-      })
+      }))
       .setOrigin(1, 0)
       .setScrollFactor(0)
       .setDepth(21);

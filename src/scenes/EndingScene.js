@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { carregarPerfilAtivo, salvarPerfil } from "../data/ProfileRepository.js";
 import { EndingService } from "../services/EndingService.js";
 import { criarBotao } from "../ui/GameButton.js";
+import { pixelTextStyle } from "../ui/TextStyles.js";
 
 export class EndingScene extends Phaser.Scene {
   constructor() {
@@ -32,25 +33,22 @@ export class EndingScene extends Phaser.Scene {
       .setStrokeStyle(3, 0x8fe6e4, 1);
 
     this.add
-      .text(640, 112, desfecho.titulo, {
-        color: desfecho.id === "guardiao" ? "#9ff5b5" : "#f4ffff",
-        fontFamily: "Arial, sans-serif",
+      .text(640, 112, desfecho.titulo, pixelTextStyle({
+        color: desfecho.id === "guardiao" ? "#9ff5b5" : "#ffffff",
         fontSize: "38px",
         fontStyle: "bold",
         align: "center",
         wordWrap: { width: 790 }
-      })
+      }, { preservarCor: true }))
       .setOrigin(0.5);
 
     this.add
-      .text(640, 225, desfecho.mensagem, {
-        color: "#c6e9ee",
-        fontFamily: "Arial, sans-serif",
+      .text(640, 225, desfecho.mensagem, pixelTextStyle({
         fontSize: "23px",
         align: "center",
         lineSpacing: 10,
         wordWrap: { width: 740 }
-      })
+      }))
       .setOrigin(0.5);
 
     this.add
@@ -58,13 +56,11 @@ export class EndingScene extends Phaser.Scene {
         640,
         390,
         `Perfil: ${this.perfil.nome}\n\nCuidado: ${Number(pontuacao.cuidado) || 0}\nConduta: ${Number(pontuacao.conduta) || 0}\nDanos: ${Number(pontuacao.danos) || 0}`,
-        {
-          color: "#ffffff",
-          fontFamily: "Arial, sans-serif",
+        pixelTextStyle({
           fontSize: "24px",
           align: "center",
           lineSpacing: 7
-        }
+        })
       )
       .setOrigin(0.5);
 

@@ -1,4 +1,5 @@
 import { criarBotao } from "./GameButton.js";
+import { pixelTextStyle } from "./TextStyles.js";
 
 export class ChoiceDialog {
   constructor(scene) {
@@ -17,23 +18,19 @@ export class ChoiceDialog {
       .setStrokeStyle(3, 0x8fe6e4, 1)
       .setDepth(51);
     this.title = scene.add
-      .text(640, 232, "Escolha uma ação", {
-        color: "#f4ffff",
-        fontFamily: "Arial, sans-serif",
+      .text(640, 232, "Escolha uma ação", pixelTextStyle({
         fontSize: "30px",
         fontStyle: "bold"
-      })
+      }))
       .setOrigin(0.5)
       .setDepth(52);
     this.message = scene.add
-      .text(640, 305, "", {
-        color: "#ffffff",
-        fontFamily: "Arial, sans-serif",
+      .text(640, 305, "", pixelTextStyle({
         fontSize: "22px",
         align: "center",
         lineSpacing: 8,
         wordWrap: { width: 680 }
-      })
+      }))
       .setOrigin(0.5)
       .setDepth(52);
 

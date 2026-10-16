@@ -11,6 +11,7 @@ import { ChoiceDialog } from "../ui/ChoiceDialog.js";
 import { HUD } from "../ui/HUD.js";
 import { InteractionPrompt } from "../ui/InteractionPrompt.js";
 import { criarBotao } from "../ui/GameButton.js";
+import { pixelTextStyle } from "../ui/TextStyles.js";
 
 const SALA_PADRAO = {
   x: 80,
@@ -83,13 +84,11 @@ export class BaseStageScene extends Phaser.Scene {
     this.choiceDialog = new ChoiceDialog(this);
 
     this.statusText = this.add
-      .text(640, 685, "Use WASD ou as setas para se movimentar.", {
-        color: "#c6e9ee",
-        fontFamily: "Arial, sans-serif",
+      .text(640, 685, "Use WASD ou as setas para se movimentar.", pixelTextStyle({
         fontSize: "18px",
         align: "center",
         wordWrap: { width: 1000 }
-      })
+      }))
       .setOrigin(0.5)
       .setDepth(20);
 
@@ -140,22 +139,18 @@ export class BaseStageScene extends Phaser.Scene {
     }
 
     this.add
-      .text(80, 145, this.stageConfig.cabecalho, {
-        color: "#f4ffff",
-        fontFamily: "Arial, sans-serif",
+      .text(80, 145, this.stageConfig.cabecalho, pixelTextStyle({
         fontSize: this.stageConfig.numeroFase === 2 ? "23px" : "25px",
         fontStyle: "bold"
-      })
+      }))
       .setDepth(10);
 
     this.add
-      .text(salaConfig.destaqueX || 180, salaConfig.destaqueY || 255, salaConfig.destaque || "", {
-        color: "#8ab7c5",
-        fontFamily: "Arial, sans-serif",
+      .text(salaConfig.destaqueX || 180, salaConfig.destaqueY || 255, salaConfig.destaque || "", pixelTextStyle({
         fontSize: "18px",
         align: "center",
         fontStyle: "bold"
-      })
+      }))
       .setOrigin(0.5)
       .setDepth(1);
   }
@@ -184,12 +179,10 @@ export class BaseStageScene extends Phaser.Scene {
         .rectangle(0, -25, 146, 88, 0x206f83, 1)
         .setStrokeStyle(2, 0xc6f5ef, 1);
       const estado = this.add
-        .text(0, -25, "ON", {
-          color: "#e9fff8",
-          fontFamily: "Arial, sans-serif",
+        .text(0, -25, "ON", pixelTextStyle({
           fontSize: "28px",
           fontStyle: "bold"
-        })
+        }))
         .setOrigin(0.5);
       const base = this.add.rectangle(0, 45, 95, 10, 0x0b1728, 1);
       const luz = this.add.circle(70, -70, 7, 0x86f7a5, 1);
@@ -224,12 +217,10 @@ export class BaseStageScene extends Phaser.Scene {
         .setStrokeStyle(3, 0xf8d39a, 1);
       const faixa = this.add.rectangle(0, 12, 16, 82, 0x8b552f, 1);
       const etiqueta = this.add
-        .text(0, 12, "MATERIAL", {
-          color: "#301b10",
-          fontFamily: "Arial, sans-serif",
+        .text(0, 12, "MATERIAL", pixelTextStyle({
           fontSize: "15px",
           fontStyle: "bold"
-        })
+        }))
         .setOrigin(0.5);
 
       grupo.add([sombra, caixa, tampa, faixa, etiqueta]);
@@ -246,12 +237,10 @@ export class BaseStageScene extends Phaser.Scene {
         .rectangle(0, -50, 86, 24, 0xe1ad4c, 1)
         .setStrokeStyle(2, 0xffe7a3, 1);
       const alerta = this.add
-        .text(0, -50, "ATENÇÃO", {
-          color: "#31210b",
-          fontFamily: "Arial, sans-serif",
+        .text(0, -50, "ATENÇÃO", pixelTextStyle({
           fontSize: "12px",
           fontStyle: "bold"
-        })
+        }))
         .setOrigin(0.5);
 
       grupo.add([sombra, poça, sinal, alerta]);
@@ -287,12 +276,10 @@ export class BaseStageScene extends Phaser.Scene {
         .rectangle(41, 15, 32, 42, 0xf0d58a, 1)
         .setStrokeStyle(2, 0xffefbd, 1);
       const orientacao = this.add
-        .text(0, -83, "ORIENTAÇÃO", {
-          color: "#f4ffff",
-          fontFamily: "Arial, sans-serif",
+        .text(0, -83, "ORIENTAÇÃO", pixelTextStyle({
           fontSize: "13px",
           fontStyle: "bold"
-        })
+        }))
         .setOrigin(0.5);
 
       grupo.add([sombra, corpo, cabeca, prancheta, orientacao]);
@@ -322,20 +309,17 @@ export class BaseStageScene extends Phaser.Scene {
     }
 
     const rotulo = this.add
-      .text(0, visual.rotuloY, interacao.label || interacao.visual.toUpperCase(), {
-        color: "#ffffff",
-        fontFamily: "Arial, sans-serif",
+      .text(0, visual.rotuloY, interacao.label || interacao.visual.toUpperCase(), pixelTextStyle({
         fontSize: "19px",
         fontStyle: "bold"
-      })
+      }))
       .setOrigin(0.5);
     const status = this.add
-      .text(0, visual.statusY, "✓ RESOLVIDO", {
+      .text(0, visual.statusY, "✓ RESOLVIDO", pixelTextStyle({
         color: "#9ff5b5",
-        fontFamily: "Arial, sans-serif",
         fontSize: "16px",
         fontStyle: "bold"
-      })
+      }, { preservarCor: true }))
       .setOrigin(0.5)
       .setVisible(false);
 
@@ -354,22 +338,19 @@ export class BaseStageScene extends Phaser.Scene {
       .setStrokeStyle(3, 0x9ff5b5, 1)
       .setDepth(61);
     this.conclusaoTitulo = this.add
-      .text(640, 255, this.stageConfig.tituloConclusao || "FASE CONCLUÍDA", {
+      .text(640, 255, this.stageConfig.tituloConclusao || "FASE CONCLUÍDA", pixelTextStyle({
         color: "#9ff5b5",
-        fontFamily: "Arial, sans-serif",
         fontSize: "38px",
         fontStyle: "bold"
-      })
+      }, { preservarCor: true }))
       .setOrigin(0.5)
       .setDepth(62);
     this.conclusaoMensagem = this.add
-      .text(640, 335, this.stageConfig.mensagemConclusao, {
-        color: "#ffffff",
-        fontFamily: "Arial, sans-serif",
+      .text(640, 335, this.stageConfig.mensagemConclusao, pixelTextStyle({
         fontSize: "22px",
         align: "center",
         wordWrap: { width: 590 }
-      })
+      }))
       .setOrigin(0.5)
       .setDepth(62);
     this.finalizarButton = criarBotao(

@@ -6,6 +6,7 @@ import {
   selecionarPerfil
 } from "../data/ProfileRepository.js";
 import { criarBotaoImagem } from "../ui/ImageButton.js";
+import { pixelTextStyle } from "../ui/TextStyles.js";
 
 const IMAGENS_PERFIL = {
   criarPerfil: {
@@ -20,6 +21,14 @@ const IMAGENS_PERFIL = {
     key: "profile-botao-voltar",
     path: "/assets/images/BotaoVoltarAoMenu.png"
   },
+  quadroNormal: {
+    key: "profile-quadro-normal",
+    path: "/assets/images/QuadroNormal"
+  },
+  quadroDourado: {
+    key: "profile-quadro-dourado",
+    path: "/assets/images/QuadroDourado"
+  },
   fundos: [
     { key: "menu-fundo-frente", path: "/assets/images/FrentePixel" },
     { key: "menu-fundo-interno-1", path: "/assets/images/Interno1" },
@@ -31,6 +40,14 @@ const IMAGENS_PERFIL = {
 
 const TEMPO_FUNDO_VISIVEL = 6500;
 const DURACAO_TRANSICAO = 2200;
+const LARGURA_CARTAO_PERFIL = 430;
+const ESPACO_CARTOES_PERFIL = 10;
+const AREA_LISTA_PERFIS = {
+  topo: 165,
+  base: 620,
+  esquerda: 640,
+  direita: 1260
+};
 
 export class ProfileScene extends Phaser.Scene {
   constructor() {
@@ -44,7 +61,9 @@ export class ProfileScene extends Phaser.Scene {
     [
       IMAGENS_PERFIL.criarPerfil,
       IMAGENS_PERFIL.iniciarJogo,
-      IMAGENS_PERFIL.voltarMenu
+      IMAGENS_PERFIL.voltarMenu,
+      IMAGENS_PERFIL.quadroNormal,
+      IMAGENS_PERFIL.quadroDourado
     ].forEach(({ key, path }) => {
       if (!this.textures.exists(key)) this.load.image(key, path);
     });
@@ -65,21 +84,35 @@ export class ProfileScene extends Phaser.Scene {
     this.iniciarSlideshow(width, height);
 
     this.add
-      .text(width / 2, 62, "PERFIL DO GUARDIÃO", {
-        color: "#ffffff",
-        fontFamily: "Arial, sans-serif",
+      .text(width / 2, 62, "PERFIL DO GUARDIÃO", pixelTextStyle({
         fontSize: "36px",
-        fontStyle: "bold",
-        stroke: "#111111",
-        strokeThickness: 5
-      })
+      }))
       .setOrigin(0.5);
 
     this.adicionarTituloColuna(width * 0.25, 145, "Crie um novo perfil local");
     this.adicionarTituloColuna(width * 0.72, 145, "Perfis existentes");
 
+    this.profileListViewport = {
+      x: AREA_LISTA_PERFIS.esquerda,
+      y: AREA_LISTA_PERFIS.topo,
+      width: AREA_LISTA_PERFIS.direita - AREA_LISTA_PERFIS.esquerda,
+      height: AREA_LISTA_PERFIS.base - AREA_LISTA_PERFIS.topo
+    };
+    this.profileListMaskGraphics = this.make.graphics({ x: 0, y: 0, add: false });
+    this.profileListMaskGraphics.fillStyle(0xffffff);
+    this.profileListMaskGraphics.fillRect(
+      this.profileListViewport.x,
+      this.profileListViewport.y,
+      this.profileListViewport.width,
+      this.profileListViewport.height
+    );
+    this.profileListMask = this.profileListMaskGraphics.createGeometryMask();
+    this.profileListScrollOffset = 0;
+    this.input.on("wheel", this.rolarListaPerfis, this);
+
     this.gameContainer = document.getElementById("game-container");
     this.nameInput = document.createElement("input");
+    this.nameInput.id = "profile-name-input";
     this.nameInput.type = "text";
     this.nameInput.placeholder = "Digite seu nome";
     this.nameInput.maxLength = 28;
@@ -92,7 +125,8 @@ export class ProfileScene extends Phaser.Scene {
       borderRadius: "9px",
       background: "#ffffff",
       color: "#1b1b1b",
-      fontFamily: "Arial, sans-serif",
+      fontFamily: '"Pixelify Sans"',
+      fontWeight: "700",
       boxSizing: "border-box",
       outline: "none",
       boxShadow: "0 3px 12px rgba(0, 0, 0, 0.4)",
@@ -119,15 +153,11 @@ export class ProfileScene extends Phaser.Scene {
     );
 
     this.statusText = this.add
-      .text(width * 0.25, 510, "Selecione um perfil ou crie um novo.", {
-        color: "#ffffff",
-        fontFamily: "Arial, sans-serif",
+      .text(width * 0.25, 510, "Selecione um perfil ou crie um novo.", pixelTextStyle({
         fontSize: "18px",
         align: "center",
-        stroke: "#111111",
-        strokeThickness: 4,
         wordWrap: { width: 480 }
-      })
+      }))
       .setOrigin(0.5);
 
     this.refreshProfiles();
@@ -151,18 +181,18 @@ export class ProfileScene extends Phaser.Scene {
       this.inputResizeObserver.observe(this.gameContainer);
     }
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.limparInput, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.off("wheel", this.rolarListaPerfis, this);
+      this.profileListMask?.destroy();
+      this.profileListMaskGraphics?.destroy();
+    });
   }
 
   adicionarTituloColuna(x, y, texto) {
     return this.add
-      .text(x, y, texto, {
-        color: "#ffffff",
-        fontFamily: "Arial, sans-serif",
+      .text(x, y, texto, pixelTextStyle({
         fontSize: "23px",
-        fontStyle: "bold",
-        stroke: "#111111",
-        strokeThickness: 5
-      })
+      }))
       .setOrigin(0.5);
   }
 
@@ -253,82 +283,114 @@ export class ProfileScene extends Phaser.Scene {
   refreshProfiles() {
     this.profileButtons.forEach((button) => button.destroy(true));
     this.profileButtons = [];
+    this.profileListScrollOffset = 0;
     this.emptyProfilesText?.destroy();
     this.emptyProfilesText = null;
 
     const perfis = listarPerfis();
     if (perfis.length === 0) {
       this.emptyProfilesText = this.add
-        .text(0.72 * this.cameras.main.width, 380, "Nenhum perfil salvo ainda.", {
-          color: "#ffffff",
-          fontFamily: "Arial, sans-serif",
+        .text(0.72 * this.cameras.main.width, 380, "Nenhum perfil salvo ainda.", pixelTextStyle({
           fontSize: "20px",
           align: "center",
-          stroke: "#111111",
-          strokeThickness: 4
-        })
+        }))
         .setOrigin(0.5);
       return;
     }
 
-    perfis.forEach((perfil, index) => this.criarBotaoPerfil(perfil, index));
+    const altura = (LARGURA_CARTAO_PERFIL / 3);
+    const passo = altura + ESPACO_CARTOES_PERFIL;
+    const alturaConteudo = perfis.length * altura + (perfis.length - 1) * ESPACO_CARTOES_PERFIL;
+    this.profileListMaxScroll = Math.max(0, alturaConteudo - this.profileListViewport.height);
+    const topoConteudo = this.profileListViewport.y + Math.max(
+      0,
+      (this.profileListViewport.height - alturaConteudo) / 2
+    );
+    const centroX = this.cameras.main.width * 0.72;
+
+    perfis.forEach((perfil, index) => {
+      const centroY = topoConteudo + altura / 2 + index * passo;
+      this.criarBotaoPerfil(perfil, centroX, centroY, altura);
+    });
     this.atualizarSelecaoPerfis();
+    this.atualizarPosicoesPerfis();
   }
 
-  criarBotaoPerfil(perfil, index) {
-    const x = this.cameras.main.width * 0.72;
-    const y = 220 + index * 78;
-    const largura = 450;
-    const altura = 64;
+  criarBotaoPerfil(perfil, x, y, altura) {
+    const largura = LARGURA_CARTAO_PERFIL;
     const fundo = this.add
-      .rectangle(0, 0, largura, altura, 0x111111, 0.62)
-      .setStrokeStyle(2, 0xe5e5e5, 0.62);
+      .image(0, 0, IMAGENS_PERFIL.quadroNormal.key)
+      .setOrigin(0.5);
+    fundo.setScale(largura / fundo.width);
     const texto = this.add
       .text(
         0,
         0,
         `${perfil.nome}\nCuidado ${perfil.pontuacao.cuidado}  •  Conduta ${perfil.pontuacao.conduta}`,
-        {
-          color: "#ffffff",
-          fontFamily: "Arial, sans-serif",
+        pixelTextStyle({
           fontSize: "16px",
           align: "center",
-          stroke: "#111111",
-          strokeThickness: 3,
           wordWrap: { width: largura - 28 }
-        }
+        })
       )
       .setOrigin(0.5);
     const botao = this.add.container(x, y, [fundo, texto]);
-    let emHover = false;
 
     botao.perfilId = perfil.id;
+    botao.alturaPerfil = altura;
+    botao.posicaoYBase = y;
     botao.setSize(largura, altura).setInteractive({ useHandCursor: true });
+    botao.setMask(this.profileListMask);
     botao.atualizarVisual = (selecionado) => {
-      fundo.setFillStyle(
-        selecionado ? 0x554626 : 0x111111,
-        selecionado ? 0.82 : emHover ? 0.78 : 0.62
-      );
-      fundo.setStrokeStyle(
-        2,
-        selecionado ? 0xffd166 : emHover ? 0xffffff : 0xe5e5e5,
-        selecionado || emHover ? 1 : 0.62
+      fundo.setTexture(
+        selecionado
+          ? IMAGENS_PERFIL.quadroDourado.key
+          : IMAGENS_PERFIL.quadroNormal.key
       );
     };
 
     botao.on("pointerover", () => {
-      emHover = true;
-      botao.atualizarVisual(botao.perfilId === this.perfilSelecionado?.id);
       this.tweens.add({ targets: botao, scale: 1.02, duration: 100, ease: "Sine.Out" });
     });
     botao.on("pointerout", () => {
-      emHover = false;
-      botao.atualizarVisual(botao.perfilId === this.perfilSelecionado?.id);
       this.tweens.add({ targets: botao, scale: 1, duration: 100, ease: "Sine.Out" });
     });
     botao.on("pointerdown", () => this.selecionar(perfil.id));
 
     this.profileButtons.push(botao);
+  }
+
+  rolarListaPerfis(pointer, _gameObjects, _deltaX, deltaY) {
+    const viewport = this.profileListViewport;
+    if (
+      !viewport ||
+      pointer.x < viewport.x ||
+      pointer.x > viewport.x + viewport.width ||
+      pointer.y < viewport.y ||
+      pointer.y > viewport.y + viewport.height
+    ) {
+      return;
+    }
+
+    this.profileListScrollOffset = Phaser.Math.Clamp(
+      this.profileListScrollOffset + deltaY * 0.7,
+      0,
+      this.profileListMaxScroll || 0
+    );
+    this.atualizarPosicoesPerfis();
+  }
+
+  atualizarPosicoesPerfis() {
+    const viewport = this.profileListViewport;
+    if (!viewport) return;
+
+    this.profileButtons.forEach((button) => {
+      button.y = button.posicaoYBase - this.profileListScrollOffset;
+      const topo = button.y - button.alturaPerfil / 2;
+      const base = button.y + button.alturaPerfil / 2;
+      const visivel = base > viewport.y && topo < viewport.y + viewport.height;
+      if (button.input) button.input.enabled = visivel;
+    });
   }
 
   atualizarSelecaoPerfis() {

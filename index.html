@@ -5,10 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guardiões da Escola</title>
     <style>
+        @font-face {
+            font-family: "Pixelify Sans";
+            src: url("/assets/fonts/PixelifySans-Bold.woff2") format("woff2");
+            font-weight: 700;
+            font-style: normal;
+            font-display: swap;
+        }
+
         :root {
             color-scheme: dark;
             background: #08111f;
-            font-family: Arial, Helvetica, sans-serif;
+            color: #ffffff;
+            font-family: "Pixelify Sans", Arial, Helvetica, sans-serif;
+            font-weight: 700;
         }
 
         html,
@@ -37,6 +47,11 @@
 
         canvas {
             display: block;
+        }
+
+        #profile-name-input::placeholder {
+            font-family: "Pixelify Sans", Arial, Helvetica, sans-serif;
+            font-weight: 700;
         }
     </style>
 </head>

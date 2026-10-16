@@ -42,6 +42,15 @@ const config = {
   ]
 };
 
+const fontesPixelify = await document.fonts.load('700 16px "Pixelify Sans"');
+const fontePixelifyCarregada = fontesPixelify.some((fonte) =>
+  fonte.family.replaceAll('"', "") === "Pixelify Sans" && fonte.status === "loaded"
+);
+
+if (!fontePixelifyCarregada) {
+  throw new Error("Não foi possível carregar a fonte Pixelify Sans Bold.");
+}
+
 const game = new Phaser.Game(config);
 
 export { config, game };

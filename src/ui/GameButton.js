@@ -1,3 +1,5 @@
+import { pixelTextStyle } from "./TextStyles.js";
+
 const CORES = {
   normal: 0x176b87,
   hover: 0x218eaa,
@@ -14,14 +16,12 @@ export function criarBotao(scene, x, y, label, onClick, opcoes = {}) {
     .rectangle(0, 0, largura, altura, opcoes.color || CORES.normal, 1)
     .setStrokeStyle(2, opcoes.borderColor || CORES.borda, 1);
   const texto = scene.add
-    .text(0, 0, label, {
+    .text(0, 0, label, pixelTextStyle({
       color: opcoes.textColor || CORES.texto,
-      fontFamily: "Arial, sans-serif",
       fontSize: opcoes.fontSize || "22px",
-      fontStyle: opcoes.bold === false ? "normal" : "bold",
       align: "center",
       wordWrap: { width: largura - 28 }
-    })
+    }))
     .setOrigin(0.5);
   const botao = scene.add.container(x, y, [fundo, texto]);
 
