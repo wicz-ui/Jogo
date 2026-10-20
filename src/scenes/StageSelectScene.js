@@ -228,7 +228,7 @@ export class StageSelectScene extends Phaser.Scene {
     const botao = criarBotaoImagem(
       this,
       x,
-      383,
+      372,
       texturaBotao,
       LARGURA_BOTAO_FASE,
       () => this.selecionarFase(fase, statusId)
@@ -250,7 +250,7 @@ export class StageSelectScene extends Phaser.Scene {
           : "Fase liberada para jogar.";
 
     this.add
-      .text(x, 449, detalhe, pixelTextStyle({
+      .text(x, 429, detalhe, pixelTextStyle({
         fontSize: "15px",
         align: "center",
         wordWrap: { width: 278 }

@@ -1,24 +1,21 @@
-import { pixelTextStyle } from "./TextStyles.js";
+const TEXTURE_KEY = "interaction-sign";
+const LARGURA = 230;
 
 export class InteractionPrompt {
   constructor(scene, x, y) {
-    this.background = scene.add
-      .rectangle(0, 0, 230, 48, 0x174f68, 1)
-      .setStrokeStyle(2, 0x9ce9e8, 1);
-    this.text = scene.add
-      .text(0, 0, "[E] Interagir", pixelTextStyle({
-        fontSize: "20px",
-        fontStyle: "bold"
-      }))
-      .setOrigin(0.5);
+    const textura = scene.textures.get(TEXTURE_KEY).getSourceImage();
+    this.width = LARGURA;
+    this.height = LARGURA * (textura.height / textura.width);
+    this.image = scene.add
+      .image(0, 0, TEXTURE_KEY)
+      .setDisplaySize(this.width, this.height);
     this.container = scene.add
-      .container(x, y, [this.background, this.text])
+      .container(x, y, [this.image])
       .setDepth(15)
       .setVisible(false);
   }
 
-  show(label = "[E] Interagir") {
-    this.text.setText(label);
+  show() {
     this.container.setVisible(true);
   }
 

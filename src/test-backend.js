@@ -7,7 +7,31 @@ import {
 import { ChoiceService } from "./services/ChoiceService.js";
 import { ProgressionService } from "./services/ProgressionService.js";
 import { EndingService } from "./services/EndingService.js";
+import {
+  lixoRecolhidoNaFase1,
+  obterImagemSalaFase1
+} from "./services/Stage1RoomService.js";
+import {
+  lixoRecolhidoNaFase2,
+  obterImagemSalaFase2
+} from "./services/Stage2RoomService.js";
+import {
+  DEBUG_COLLISIONS,
+  FASE1_COLISOES_FIXAS,
+  FASE1_COLISOES_LIXO,
+  mapearRetanguloColisaoFase1
+} from "./data/stage1Collisions.js";
 import { LISTA_FASES } from "./data/stagesData.js";
+import { GAMEPLAY_AREA } from "./data/gameplayLayout.js";
+import {
+  DEBUG_COLLISIONS_FASE2,
+  FASE2_AREA_CAMINHAVEL,
+  FASE2_COLISOES_FIXAS,
+  FASE2_COLISOES_LIXO,
+  mapearPontoImagemFase2,
+  mapearRaioImagemFase2,
+  mapearRetanguloColisaoFase2
+} from "./data/stage2Collisions.js";
 
 const INTERACOES_OBRIGATORIAS = [
   "computador_01",
@@ -167,6 +191,82 @@ assert.deepEqual(recarregado.escolhasRealizadas, [
   "guardar_equipamento"
 ]);
 console.log("OK: conclusão, pontuação e escolhas permanecem após salvar/carregar.");
+assert.equal(obterImagemSalaFase1(recarregado), "Fase1Arrumada");
+
+console.log("=== Teste 14.1: imagem do laboratório acompanha apenas escolhas positivas ===");
+const combinacoesVisuais = [
+  [[], "Fase1Desarrumada"],
+  [["recolher_lixo"], "Fase1ArrumadaLixo"],
+  [["desligar_computador"], "Fase1ArrumadaComputador"],
+  [["guardar_equipamento"], "Fase1ArrumadaEquipamentos"],
+  [["recolher_lixo", "desligar_computador"], "Fase1ArrumadaLixoComputador"],
+  [["recolher_lixo", "guardar_equipamento"], "Fase1ArrumadaLixoEquipamentos"],
+  [["desligar_computador", "guardar_equipamento"], "Fase1ArrumadaEquipamentosComputador"],
+  [["recolher_lixo", "desligar_computador", "guardar_equipamento"], "Fase1Arrumada"]
+];
+
+combinacoesVisuais.forEach(([escolhas, imagemEsperada]) => {
+  assert.equal(obterImagemSalaFase1({ escolhasRealizadas: escolhas }), imagemEsperada);
+});
+assert.equal(obterImagemSalaFase1({
+  escolhasRealizadas: ["deixar_lixo", "ignorar_computador", "usar_equipamento_incorretamente"]
+}), "Fase1Desarrumada");
+assert.equal(obterImagemSalaFase1({
+  escolhasRealizadas: [
+    { choiceId: "recolher_lixo" },
+    { choiceId: "ignorar_computador" }
+  ]
+}), "Fase1ArrumadaLixo");
+const perfilVisualSalvo = criarNovoPerfil("Estado visual salvo");
+ChoiceService.registrarEscolha(perfilVisualSalvo, "recolher_lixo");
+ChoiceService.registrarEscolha(perfilVisualSalvo, "ignorar_computador");
+const perfilVisualRecarregado = carregarPerfil(salvarPerfil(perfilVisualSalvo).id);
+assert.equal(obterImagemSalaFase1(perfilVisualRecarregado), "Fase1ArrumadaLixo");
+const outroPerfilVisual = criarNovoPerfil("Outro estado visual");
+ChoiceService.registrarEscolha(outroPerfilVisual, "guardar_equipamento");
+assert.equal(obterImagemSalaFase1(outroPerfilVisual), "Fase1ArrumadaEquipamentos");
+assert.equal(obterImagemSalaFase1(perfilVisualRecarregado), "Fase1ArrumadaLixo");
+console.log("OK: as oito combinações, escolhas negativas, formatos salvos e reloads mapeiam corretamente.");
+
+console.log("=== Teste 14.2: a arte da Fase 2 segue escolhas positivas e persistidas ===");
+const combinacoesVisuaisFase2 = [
+  [[], "Fase2Desarrumada"],
+  [["fase2_recolher_lixo"], "Fase2ArrumadaLixo"],
+  [["fase2_recolher_lixo", "fase2_sinalizar_liquido"], "Fase2ArrumadaLixoLiquido"],
+  [
+    ["fase2_recolher_lixo", "fase2_sinalizar_liquido", "fase2_ajudar_colega"],
+    "Fase2ArrumadaLixoLiquidoConversa"
+  ]
+];
+combinacoesVisuaisFase2.forEach(([escolhas, imagemEsperada]) => {
+  assert.equal(obterImagemSalaFase2({ escolhasRealizadas: escolhas }), imagemEsperada);
+});
+assert.equal(obterImagemSalaFase2({
+  escolhasRealizadas: [
+    "fase2_ignorar_lixo",
+    "fase2_ignorar_liquido",
+    "fase2_ignorar_desrespeito"
+  ]
+}), "Fase2Desarrumada");
+assert.equal(obterImagemSalaFase2({
+  escolhasRealizadas: ["fase2_sinalizar_liquido", "fase2_ajudar_colega"]
+}), "Fase2Desarrumada");
+
+const perfilVisualFase2 = criarNovoPerfil("Estado visual Fase 2");
+ChoiceService.registrarEscolha(perfilVisualFase2, "fase2_recolher_lixo");
+ChoiceService.registrarEscolha(perfilVisualFase2, "fase2_sinalizar_liquido");
+const perfilVisualFase2Recarregado = carregarPerfil(salvarPerfil(perfilVisualFase2).id);
+assert.equal(obterImagemSalaFase2(perfilVisualFase2Recarregado), "Fase2ArrumadaLixoLiquido");
+const outroPerfilVisualFase2 = criarNovoPerfil("Outro estado visual Fase 2");
+assert.equal(obterImagemSalaFase2(outroPerfilVisualFase2), "Fase2Desarrumada");
+assert.equal(obterImagemSalaFase2({
+  escolhasRealizadas: [
+    { choiceId: "fase2_recolher_lixo" },
+    { choiceId: "fase2_sinalizar_liquido" },
+    { choiceId: "fase2_ajudar_colega" }
+  ]
+}), "Fase2ArrumadaLixoLiquidoConversa");
+console.log("OK: quatro estados, escolhas negativas, ordem fora da sequência, reload e perfis independentes.");
 
 console.log("=== Teste 15: perfis João e Maria têm progresso independente ===");
 const joao = criarNovoPerfil("João Marco 2");
@@ -672,4 +772,79 @@ assert.deepEqual(idsFase3, [
 ]);
 console.log("OK: três fases e IDs da Fase 3 estão centralizados em stagesData.js.");
 
-console.log("\nTodos os 44 testes de lógica dos Marcos 2, 3 e 4 passaram.");
+console.log("=== Teste 45: hitboxes fixas e lixo dinâmico da Fase 1 ===");
+assert.equal(FASE1_COLISOES_FIXAS.length, 12);
+assert.equal(FASE1_COLISOES_LIXO.length, 2);
+assert.equal(DEBUG_COLLISIONS, false);
+assert.equal(lixoRecolhidoNaFase1({ escolhasRealizadas: [] }), false);
+assert.equal(lixoRecolhidoNaFase1({ escolhasRealizadas: ["deixar_lixo"] }), false);
+assert.equal(lixoRecolhidoNaFase1({ escolhasRealizadas: ["recolher_lixo"] }), true);
+assert.equal(lixoRecolhidoNaFase1({
+  escolhasRealizadas: [{ choiceId: "recolher_lixo" }]
+}), true);
+assert.ok(FASE1_COLISOES_FIXAS.some(({ id }) => id === "lixeira"));
+console.log("OK: 12 obstáculos fixos, 2 papéis dinâmicos e lixeira permanente.");
+
+console.log("=== Teste 46: hitboxes acompanham posição e escala da arte ===");
+const imagemTamanhoPadrao = {
+  x: 80,
+  y: 160,
+  width: 1877,
+  height: 838,
+  displayWidth: 1120,
+  displayHeight: 1120 * 838 / 1877,
+  originX: 0,
+  originY: 0
+};
+const imagemDobro = {
+  ...imagemTamanhoPadrao,
+  x: 160,
+  y: 320,
+  displayWidth: imagemTamanhoPadrao.displayWidth * 2,
+  displayHeight: imagemTamanhoPadrao.displayHeight * 2
+};
+const retanguloLixeira = FASE1_COLISOES_FIXAS.find(({ id }) => id === "lixeira");
+const lixeiraPadrao = mapearRetanguloColisaoFase1(retanguloLixeira, imagemTamanhoPadrao);
+const lixeiraDobro = mapearRetanguloColisaoFase1(retanguloLixeira, imagemDobro);
+assert.ok(Math.abs(lixeiraDobro.x - lixeiraPadrao.x * 2) < 0.0001);
+assert.ok(Math.abs(lixeiraDobro.y - lixeiraPadrao.y * 2) < 0.0001);
+assert.ok(Math.abs(lixeiraDobro.width - lixeiraPadrao.width * 2) < 0.0001);
+assert.ok(Math.abs(lixeiraDobro.height - lixeiraPadrao.height * 2) < 0.0001);
+assert.throws(() => mapearRetanguloColisaoFase1(retanguloLixeira, null), TypeError);
+console.log("OK: posição e dimensões da hitbox escalam junto com a imagem.");
+
+console.log("=== Teste 47: layout e colisões da Fase 2 acompanham o mapa contido ===");
+assert.deepEqual(GAMEPLAY_AREA, { x: 80, y: 160, width: 1120, height: 500 });
+assert.equal(DEBUG_COLLISIONS_FASE2, false);
+assert.ok(FASE2_COLISOES_FIXAS.some(({ id }) => id === "banco-superior"));
+assert.ok(FASE2_COLISOES_FIXAS.some(({ id }) => id === "bebedouro"));
+assert.ok(FASE2_COLISOES_FIXAS.some(({ id }) => id === "colega-central"));
+assert.ok(FASE2_COLISOES_LIXO.every(({ dinamica }) => dinamica === true));
+assert.equal(lixoRecolhidoNaFase2({ escolhasRealizadas: ["fase2_ignorar_lixo"] }), false);
+assert.equal(lixoRecolhidoNaFase2({ escolhasRealizadas: ["fase2_recolher_lixo"] }), true);
+
+const escalaFase2 = GAMEPLAY_AREA.height / 941;
+const imagemFase2Mapeada = {
+  x: GAMEPLAY_AREA.x + (GAMEPLAY_AREA.width - 1672 * escalaFase2) / 2,
+  y: GAMEPLAY_AREA.y,
+  width: 1672,
+  height: 941,
+  displayWidth: 1672 * escalaFase2,
+  displayHeight: 941 * escalaFase2,
+  originX: 0,
+  originY: 0
+};
+const lixoNaImagem = mapearPontoImagemFase2(268, 268, imagemFase2Mapeada);
+assert.ok(Math.abs(lixoNaImagem.x - (imagemFase2Mapeada.x + 268 * escalaFase2)) < 0.0001);
+assert.ok(Math.abs(lixoNaImagem.y - (imagemFase2Mapeada.y + 268 * escalaFase2)) < 0.0001);
+assert.ok(Math.abs(mapearRaioImagemFase2(157, imagemFase2Mapeada) - 157 * escalaFase2) < 0.0001);
+
+const pisoFase2 = mapearRetanguloColisaoFase2(FASE2_AREA_CAMINHAVEL, imagemFase2Mapeada);
+assert.ok(pisoFase2.x - pisoFase2.width / 2 >= imagemFase2Mapeada.x);
+assert.ok(pisoFase2.y - pisoFase2.height / 2 >= imagemFase2Mapeada.y);
+assert.ok(pisoFase2.x + pisoFase2.width / 2 <= imagemFase2Mapeada.x + imagemFase2Mapeada.displayWidth);
+assert.ok(pisoFase2.y + pisoFase2.height / 2 <= imagemFase2Mapeada.y + imagemFase2Mapeada.displayHeight);
+assert.throws(() => mapearRetanguloColisaoFase2(FASE2_AREA_CAMINHAVEL, null), TypeError);
+console.log("OK: piso, pontos, raios e hitboxes usam a escala uniforme do mapa; lixo é dinâmico.");
+
+console.log("\nTodos os testes de lógica dos Marcos 2, 3, 4, colisões das Fases 1 e 2 e visual da Fase 2 passaram.");

@@ -1,5 +1,9 @@
-import { criarBotao } from "./GameButton.js";
+import { ChoiceImageButton } from "./ChoiceImageButton.js";
 import { pixelTextStyle } from "./TextStyles.js";
+
+const QUADRO_KEY = "interaction-board";
+const GIZ_AZUL_KEY = "interaction-chalk-blue";
+const GIZ_LARANJA_KEY = "interaction-chalk-orange";
 
 export class ChoiceDialog {
   constructor(scene) {
@@ -9,57 +13,59 @@ export class ChoiceDialog {
     this.onChoice = null;
     this.opcoes = [];
 
+    const camera = scene.cameras.main;
+    const centerX = camera.centerX;
+    const centerY = camera.centerY;
+    const quadroTexture = scene.textures.get(QUADRO_KEY).getSourceImage();
+    const escalaQuadro = Math.min(
+      camera.width * 0.76 / quadroTexture.width,
+      camera.height * 0.76 / quadroTexture.height
+    );
+    const larguraQuadro = quadroTexture.width * escalaQuadro;
+
     this.overlay = scene.add
-      .rectangle(640, 360, 1280, 720, 0x000000, 0.72)
+      .rectangle(centerX, centerY, camera.width, camera.height, 0x000000, 0.68)
       .setInteractive()
       .setDepth(50);
     this.panel = scene.add
-      .rectangle(640, 360, 780, 410, 0x102b43, 1)
-      .setStrokeStyle(3, 0x8fe6e4, 1)
+      .image(centerX, centerY, QUADRO_KEY)
+      .setScale(escalaQuadro)
       .setDepth(51);
     this.title = scene.add
-      .text(640, 232, "Escolha uma ação", pixelTextStyle({
+      .text(centerX, centerY - 155, "Escolha uma ação", pixelTextStyle({
         fontSize: "30px",
-        fontStyle: "bold"
+        align: "center",
+        wordWrap: { width: larguraQuadro * 0.72 }
       }))
       .setOrigin(0.5)
       .setDepth(52);
     this.message = scene.add
-      .text(640, 305, "", pixelTextStyle({
-        fontSize: "22px",
+      .text(centerX, centerY - 82, "", pixelTextStyle({
+        fontSize: "21px",
         align: "center",
-        lineSpacing: 8,
-        wordWrap: { width: 680 }
+        lineSpacing: 5,
+        wordWrap: { width: larguraQuadro * 0.72, useAdvancedWrap: true }
       }))
       .setOrigin(0.5)
       .setDepth(52);
 
     this.optionButtons = [
-      criarBotao(
-      scene,
-      640,
-      420,
-      "Opção 1",
-      () => this.choose(0),
-      { width: 500, height: 62, fontSize: "21px" }
-      ).setDepth(52),
-      criarBotao(
-      scene,
-      640,
-      510,
-      "Opção 2",
-      () => this.choose(1),
-      { width: 500, height: 62, fontSize: "21px", color: 0x80533b }
-      ).setDepth(52)
+      new ChoiceImageButton(scene, {
+        x: centerX,
+        y: centerY + 42,
+        imageKey: GIZ_AZUL_KEY,
+        width: 520,
+        onClick: () => this.choose(0)
+      }).setDepth(53),
+      new ChoiceImageButton(scene, {
+        x: centerX,
+        y: centerY + 148,
+        imageKey: GIZ_LARANJA_KEY,
+        width: 520,
+        onClick: () => this.choose(1)
+      }).setDepth(53)
     ];
 
-    this.elements = [
-      this.overlay,
-      this.panel,
-      this.title,
-      this.message,
-      ...this.optionButtons
-    ];
     this.hide();
   }
 
@@ -84,18 +90,14 @@ export class ChoiceDialog {
     this.title.setText(configuracaoNormalizada.titulo || "Escolha uma ação");
     this.message.setText(configuracaoNormalizada.mensagem || "");
 
+    this.overlay.setVisible(true);
+    this.panel.setVisible(true);
+    this.title.setVisible(true);
+    this.message.setVisible(true);
     this.optionButtons.forEach((button, index) => {
       const opcao = this.opcoes[index];
       button.setLabel(opcao?.texto || "");
       button.setButtonVisible(Boolean(opcao));
-    });
-
-    this.elements.forEach((element) => element.setVisible(true));
-
-    this.optionButtons.forEach((button, index) => {
-      if (!this.opcoes[index]) {
-        button.setButtonVisible(false);
-      }
     });
   }
 
@@ -126,13 +128,20 @@ export class ChoiceDialog {
 
   hide() {
     this.isOpen = false;
-    this.elements?.forEach((element) => element.setVisible(false));
+    this.overlay?.setVisible(false);
+    this.panel?.setVisible(false);
+    this.title?.setVisible(false);
+    this.message?.setVisible(false);
     this.optionButtons?.forEach((button) => button.setButtonVisible(false));
   }
 
   destroy() {
-    this.elements?.forEach((element) => element.destroy(true));
-    this.elements = [];
+    this.overlay?.destroy();
+    this.panel?.destroy();
+    this.title?.destroy();
+    this.message?.destroy();
+    this.optionButtons?.forEach((button) => button.destroy());
+    this.optionButtons = [];
     this.opcoes = [];
   }
 }

@@ -1,5 +1,12 @@
 import { ChoiceService } from "../services/ChoiceService.js";
+import { criarBotaoImagem } from "./ImageButton.js";
 import { pixelTextStyle } from "./TextStyles.js";
+
+const QUADRO_KEY = "stage-hud-board";
+const BOTAO_FASES_KEY = "stage-hud-button-phases";
+const LARGURA_QUADRO = 1080;
+const CENTRO_Y_QUADRO = 80;
+const LARGURA_BOTAO_FASES = 144;
 
 export class HUD {
   constructor(
@@ -7,20 +14,26 @@ export class HUD {
     perfil,
     listaInteracoesObrigatorias = [],
     objetivo = "",
-    exibirDanos = false
+    exibirDanos = false,
+    onOpenStages = () => {}
   ) {
     this.scene = scene;
     this.listaInteracoesObrigatorias = listaInteracoesObrigatorias;
     this.objetivo = objetivo;
     this.exibirDanos = exibirDanos;
-    this.panel = scene.add
-      .rectangle(640, 60, 1232, 116, 0x10263d, 0.98)
-      .setStrokeStyle(2, 0x315572, 1)
+    const camera = scene.cameras.main;
+    const centerX = camera.centerX;
+    const texturaQuadro = scene.textures.get(QUADRO_KEY).getSourceImage();
+    const escalaQuadro = LARGURA_QUADRO / texturaQuadro.width;
+
+    this.board = scene.add
+      .image(centerX, CENTRO_Y_QUADRO, QUADRO_KEY)
+      .setScale(escalaQuadro)
       .setScrollFactor(0)
       .setDepth(20);
 
     this.objectiveText = scene.add
-      .text(34, 20, this.formatarObjetivo(objetivo), pixelTextStyle({
+      .text(130, 19, this.formatarObjetivo(objetivo), pixelTextStyle({
         fontSize: "24px",
         fontStyle: "bold"
       }))
@@ -28,7 +41,7 @@ export class HUD {
       .setDepth(21);
 
     this.progressText = scene.add
-      .text(34, 55, "Progresso: 0/3", pixelTextStyle({
+      .text(130, 52, "Progresso: 0/3", pixelTextStyle({
         fontSize: "20px",
         fontStyle: "bold"
       }))
@@ -36,14 +49,14 @@ export class HUD {
       .setDepth(21);
 
     this.profileText = scene.add
-      .text(34, 87, "", pixelTextStyle({
+      .text(130, 82, "", pixelTextStyle({
         fontSize: "18px"
       }))
       .setScrollFactor(0)
       .setDepth(21);
 
     this.scoreText = scene.add
-      .text(930, 23, "", pixelTextStyle({
+      .text(975, 21, "", pixelTextStyle({
         fontSize: "21px",
         fontStyle: "bold",
         align: "right",
@@ -52,6 +65,25 @@ export class HUD {
       .setOrigin(1, 0)
       .setScrollFactor(0)
       .setDepth(21);
+
+    this.stageButton = criarBotaoImagem(
+      scene,
+      1090,
+      62,
+      BOTAO_FASES_KEY,
+      LARGURA_BOTAO_FASES,
+      onOpenStages
+    )
+      .setScrollFactor(0)
+      .setDepth(22);
+    this.stageButton.add(
+      scene.add
+        .text(0, 0, "FASES", pixelTextStyle({
+          fontSize: "17px",
+          align: "center"
+        }))
+        .setOrigin(0.5)
+    );
 
     this.update(perfil);
   }
@@ -82,10 +114,11 @@ export class HUD {
   }
 
   destroy() {
-    this.panel.destroy();
+    this.board.destroy();
     this.objectiveText.destroy();
     this.progressText.destroy();
     this.profileText.destroy();
     this.scoreText.destroy();
+    this.stageButton.destroy(true);
   }
 }

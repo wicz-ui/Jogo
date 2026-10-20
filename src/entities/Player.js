@@ -8,7 +8,9 @@ export class Player extends Phaser.GameObjects.Rectangle {
     scene.physics.add.existing(this);
     this.setStrokeStyle(3, 0xffe7a3, 1);
     this.body.setCollideWorldBounds(true);
-    this.body.setSize(44, 58);
+    // A colisão acompanha os pés, sem alterar o tamanho visual do guardião.
+    this.body.setSize(30, 18, false);
+    this.body.setOffset(7, 38);
     this.speed = 230;
   }
 

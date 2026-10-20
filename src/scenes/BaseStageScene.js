@@ -12,13 +12,22 @@ import { HUD } from "../ui/HUD.js";
 import { InteractionPrompt } from "../ui/InteractionPrompt.js";
 import { criarBotao } from "../ui/GameButton.js";
 import { pixelTextStyle } from "../ui/TextStyles.js";
+import { GAMEPLAY_AREA } from "../data/gameplayLayout.js";
 
-const SALA_PADRAO = {
-  x: 80,
-  y: 175,
-  width: 1120,
-  height: 475
-};
+const SALA_PADRAO = GAMEPLAY_AREA;
+
+const ASSETS_INTERACOES = [
+  ["interaction-sign", "/assets/images/PlacaInteragir.png"],
+  ["interaction-board", "/assets/images/QuadroInteracoes.png"],
+  ["interaction-chalk-blue", "/assets/images/BotaoGizAzul.png"],
+  ["interaction-chalk-orange", "/assets/images/BotaoGizLaranja.png"],
+  ["interaction-chalk-pink", "/assets/images/BotaoGizRosa.png"]
+];
+
+const ASSETS_HUD = [
+  ["stage-hud-board", "/assets/images/QuadroLargo.png"],
+  ["stage-hud-button-phases", "/assets/images/BotaoGizAzul.png"]
+];
 
 /**
  * Infraestrutura compartilhada pelas fases jogáveis da campanha.
@@ -31,6 +40,14 @@ export class BaseStageScene extends Phaser.Scene {
 
   getStageConfig() {
     throw new Error("A cena precisa fornecer getStageConfig().");
+  }
+
+  preload() {
+    [...ASSETS_INTERACOES, ...ASSETS_HUD].forEach(([chave, caminho]) => {
+      if (!this.textures.exists(chave)) {
+        this.load.image(chave, caminho);
+      }
+    });
   }
 
   init(data) {
@@ -65,7 +82,8 @@ export class BaseStageScene extends Phaser.Scene {
       this.perfil,
       this.stageConfig.interacoesObrigatorias,
       this.stageConfig.objetivo,
-      this.stageConfig.exibirDanos === true
+      this.stageConfig.exibirDanos === true,
+      () => this.scene.start("StageSelectScene", { perfil: this.perfil })
     );
     this.criarObjetosInterativos();
 
@@ -91,15 +109,6 @@ export class BaseStageScene extends Phaser.Scene {
       }))
       .setOrigin(0.5)
       .setDepth(20);
-
-    criarBotao(
-      this,
-      1125,
-      55,
-      "FASES",
-      () => this.scene.start("StageSelectScene", { perfil: this.perfil }),
-      { width: 130, height: 42, fontSize: "17px" }
-    ).setDepth(22);
 
     this.criarModalConclusao();
     this.atualizarEstadoInteracoes();
@@ -139,7 +148,7 @@ export class BaseStageScene extends Phaser.Scene {
     }
 
     this.add
-      .text(80, 145, this.stageConfig.cabecalho, pixelTextStyle({
+      .text(80, 127, this.stageConfig.cabecalho, pixelTextStyle({
         fontSize: this.stageConfig.numeroFase === 2 ? "23px" : "25px",
         fontStyle: "bold"
       }))
@@ -547,6 +556,57 @@ export class BaseStageScene extends Phaser.Scene {
     }
   }
 
+  obterPosicaoPrompt(interacao) {
+    const camera = this.cameras.main;
+    const metadeLargura = this.interactionPrompt.width / 2;
+    const metadeAltura = this.interactionPrompt.height / 2;
+    const margem = 10;
+    const jogador = this.player.getBounds();
+    const topoInterface = new Phaser.Geom.Rectangle(0, 0, camera.width, 174);
+    const candidatos = [
+      { x: interacao.x, y: interacao.y - 115 },
+      { x: interacao.x + 155, y: interacao.y },
+      { x: interacao.x - 155, y: interacao.y },
+      { x: interacao.x, y: interacao.y + 115 }
+    ].filter(({ x, y }) =>
+      x >= metadeLargura + margem &&
+      x <= camera.width - metadeLargura - margem &&
+      y >= metadeAltura + margem &&
+      y <= camera.height - metadeAltura - margem
+    );
+
+    const areaSobreposta = (a, b) => {
+      const largura = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+      const altura = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+      return largura * altura;
+    };
+
+    const pontuar = ({ x, y }) => {
+      const caixa = new Phaser.Geom.Rectangle(
+        x - metadeLargura,
+        y - metadeAltura,
+        this.interactionPrompt.width,
+        this.interactionPrompt.height
+      );
+      const pontoAlvoCoberto =
+        interacao.x >= caixa.left - 12 && interacao.x <= caixa.right + 12 &&
+        interacao.y >= caixa.top - 12 && interacao.y <= caixa.bottom + 12;
+
+      return areaSobreposta(caixa, jogador) * 10 +
+        areaSobreposta(caixa, topoInterface) * 4 +
+        (pontoAlvoCoberto ? 1_000_000 : 0);
+    };
+
+    const posicao = candidatos
+      .map((candidato, ordem) => ({ ...candidato, ordem, pontuacao: pontuar(candidato) }))
+      .sort((a, b) => a.pontuacao - b.pontuacao || a.ordem - b.ordem)[0];
+
+    return posicao || {
+      x: Phaser.Math.Clamp(interacao.x, metadeLargura + margem, camera.width - metadeLargura - margem),
+      y: Phaser.Math.Clamp(interacao.y - 115, metadeAltura + margem, camera.height - metadeAltura - margem)
+    };
+  }
+
   update() {
     if (!this.player || !this.choiceDialog) {
       return;
@@ -572,7 +632,8 @@ export class BaseStageScene extends Phaser.Scene {
 
     const interacao = this.obterInteracaoAtiva();
     if (interacao) {
-      this.interactionPrompt.setPosition(interacao.x, interacao.y - 100);
+      const { x, y } = this.obterPosicaoPrompt(interacao);
+      this.interactionPrompt.setPosition(x, y);
       this.interactionPrompt.show();
       if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
         this.abrirEscolha(interacao);
