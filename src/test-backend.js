@@ -42,6 +42,11 @@ import {
   mapearRetanguloColisaoFase3
 } from "./data/stage3Collisions.js";
 import { obterTexturaFase3 } from "./services/Stage3RoomService.js";
+import {
+  PLAYABLE_CHARACTER_IDS,
+  PLAYABLE_CHARACTERS
+} from "./data/charactersData.js";
+import { CharacterService } from "./services/CharacterService.js";
 
 const INTERACOES_OBRIGATORIAS = [
   "computador_01",
@@ -975,6 +980,62 @@ assert.deepEqual(idsFase3, [
   "fase3_professor_01"
 ]);
 console.log("OK: três fases e IDs da Fase 3 estão centralizados em stagesData.js.");
+
+console.log("=== Teste 44.1: seleção independente e persistente de personagem ===");
+assert.deepEqual(PLAYABLE_CHARACTER_IDS, [
+  "abner",
+  "dorival",
+  "edson",
+  "lucas",
+  "matheus",
+  "rosy"
+]);
+Object.values(PLAYABLE_CHARACTERS).forEach(({ path }) => {
+  assert.equal(existsSync(`public${path}`), true, `Asset não encontrado: public${path}`);
+});
+
+PLAYABLE_CHARACTER_IDS.forEach((idEsperado, indice) => {
+  const perfil = { personagemId: null };
+  const valorAleatorio = indice / PLAYABLE_CHARACTER_IDS.length;
+  assert.equal(
+    CharacterService.obterOuSortearPersonagem(perfil, () => valorAleatorio),
+    idEsperado
+  );
+  assert.equal(perfil.personagemId, idEsperado);
+});
+
+const perfilPersonagemAntigo = criarNovoPerfil("Save antigo sem personagem");
+delete perfilPersonagemAntigo.personagemId;
+salvarPerfil(perfilPersonagemAntigo);
+const perfilMigrado = carregarPerfil(perfilPersonagemAntigo.id);
+assert.equal(perfilMigrado.personagemId, null);
+assert.equal(
+  CharacterService.obterOuSortearPersonagem(perfilMigrado, () => 0.99),
+  "rosy"
+);
+salvarPerfil(perfilMigrado);
+assert.equal(carregarPerfil(perfilPersonagemAntigo.id).personagemId, "rosy");
+assert.equal(
+  CharacterService.obterOuSortearPersonagem(perfilMigrado, () => {
+    throw new Error("Um personagem já escolhido não deve ser sorteado outra vez.");
+  }),
+  "rosy"
+);
+
+const perfilOutroPersonagem = criarNovoPerfil("Outro perfil visual");
+assert.equal(
+  CharacterService.obterOuSortearPersonagem(perfilOutroPersonagem, () => 0.2),
+  "dorival"
+);
+assert.equal(carregarPerfil(perfilPersonagemAntigo.id).personagemId, "rosy");
+const perfilComPersonagemInvalido = criarNovoPerfil("Save com personagem inválido");
+perfilComPersonagemInvalido.personagemId = "toString";
+assert.equal(salvarPerfil(perfilComPersonagemInvalido).personagemId, null);
+assert.equal(
+  CharacterService.obterOuSortearPersonagem(perfilComPersonagemInvalido, () => 0),
+  "abner"
+);
+console.log("OK: os seis IDs são sorteáveis; save antigo migra e perfis mantêm personagens distintos.");
 
 console.log("=== Teste 45: hitboxes fixas e lixo dinâmico da Fase 1 ===");
 assert.equal(FASE1_COLISOES_FIXAS.length, 12);

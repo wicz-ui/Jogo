@@ -6,13 +6,15 @@ import {
 import { ChoiceService } from "../services/ChoiceService.js";
 import { ProgressionService } from "../services/ProgressionService.js";
 import { EndingService } from "../services/EndingService.js";
-import Player from "../entities/Player.js";
+import Player, { prepararPersonagens } from "../entities/Player.js";
 import { ChoiceDialog } from "../ui/ChoiceDialog.js";
 import { HUD } from "../ui/HUD.js";
 import { InteractionPrompt } from "../ui/InteractionPrompt.js";
 import { CHALK_TEXTURES, criarBotaoGiz } from "../ui/ChalkButton.js";
 import { pixelTextStyle } from "../ui/TextStyles.js";
 import { GAMEPLAY_AREA } from "../data/gameplayLayout.js";
+import { PLAYABLE_CHARACTERS } from "../data/charactersData.js";
+import { CharacterService } from "../services/CharacterService.js";
 
 const SALA_PADRAO = GAMEPLAY_AREA;
 
@@ -48,6 +50,12 @@ export class BaseStageScene extends Phaser.Scene {
         this.load.image(chave, caminho);
       }
     });
+
+    Object.values(PLAYABLE_CHARACTERS).forEach((personagem) => {
+      if (!this.textures.exists(personagem.sourceTexture)) {
+        this.load.image(personagem.sourceTexture, personagem.path);
+      }
+    });
   }
 
   init(data) {
@@ -72,6 +80,13 @@ export class BaseStageScene extends Phaser.Scene {
       return;
     }
 
+    const personagemAnterior = this.perfil.personagemId;
+    CharacterService.obterOuSortearPersonagem(this.perfil);
+    if (this.perfil.personagemId !== personagemAnterior) {
+      this.perfil = salvarPerfil(this.perfil);
+    }
+    prepararPersonagens(this);
+
     this.interacaoVisuais = new Map();
     this.conclusaoAberta = false;
     this.finalizacaoEmAndamento = false;
@@ -88,7 +103,7 @@ export class BaseStageScene extends Phaser.Scene {
     this.criarObjetosInterativos();
 
     const inicio = this.stageConfig.jogadorInicial || { x: 230, y: 380 };
-    this.player = new Player(this, inicio.x, inicio.y);
+    this.player = new Player(this, inicio.x, inicio.y, this.perfil.personagemId);
     const sala = { ...SALA_PADRAO, ...(this.stageConfig.sala || {}) };
     this.physics.world.setBounds(sala.x, sala.y, sala.width, sala.height);
     this.player.body.setCollideWorldBounds(true);
@@ -504,14 +519,16 @@ export class BaseStageScene extends Phaser.Scene {
   }
 
   obterInteracaoAtiva() {
+    const posicaoJogador = this.player.getInteractionPosition();
+
     return this.stageConfig.interacoes.find((interacao) => {
       if (ChoiceService.interacaoConcluida(this.perfil, interacao.id)) {
         return false;
       }
 
       return Phaser.Math.Distance.Between(
-        this.player.x,
-        this.player.y,
+        posicaoJogador.x,
+        posicaoJogador.y,
         interacao.x,
         interacao.y
       ) <= interacao.raioInteracao;

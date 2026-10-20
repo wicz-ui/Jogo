@@ -1,3 +1,5 @@
+import { PLAYABLE_CHARACTER_IDS } from "./charactersData.js";
+
 const CHAVE_PERFIS = "guardioes_perfis";
 const CHAVE_PERFIL_ATIVO = "guardioes_perfil_ativo";
 const CHAVE_LEGADA = "guardioes_perfil";
@@ -52,7 +54,8 @@ function criarPerfilBase(nome) {
       fasesConcluidas: [],
       campanhaConcluida: false
     },
-    escolhasRealizadas: []
+    escolhasRealizadas: [],
+    personagemId: null
   };
 }
 
@@ -79,6 +82,9 @@ function normalizarPerfil(perfil) {
   perfilSeguro.escolhasRealizadas = Array.isArray(perfilSeguro.escolhasRealizadas)
     ? [...perfilSeguro.escolhasRealizadas]
     : [];
+  perfilSeguro.personagemId = PLAYABLE_CHARACTER_IDS.includes(perfilSeguro.personagemId)
+    ? perfilSeguro.personagemId
+    : null;
 
   return perfilSeguro;
 }
