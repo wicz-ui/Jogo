@@ -52,9 +52,9 @@ export class MainMenuScene extends Phaser.Scene {
     const botoes = [
       ["menu-botao-novo-jogo", 280, () => this.scene.start("ProfileScene", { mode: "new" })],
       ["menu-botao-continuar", 364, () => this.continuarJogo()],
-      ["menu-botao-instrucoes", 448, () => this.mostrarAviso()],
-      ["menu-botao-configuracoes", 532, () => this.mostrarAviso()],
-      ["menu-botao-creditos", 616, () => this.mostrarAviso()]
+      ["menu-botao-instrucoes", 448, () => this.scene.start("InstructionsScene")],
+      ["menu-botao-configuracoes", 532, () => this.scene.start("SettingsScene")],
+      ["menu-botao-creditos", 616, () => this.scene.start("CreditsScene")]
     ];
 
     botoes.forEach(([texture, y, onClick]) => {

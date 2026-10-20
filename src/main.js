@@ -7,6 +7,9 @@ import Stage2Scene from "./scenes/Stage2Scene.js";
 import Stage3Scene from "./scenes/Stage3Scene.js";
 import StageResultScene from "./scenes/StageResultScene.js";
 import EndingScene from "./scenes/EndingScene.js";
+import InstructionsScene from "./scenes/InstructionsScene.js";
+import SettingsScene from "./scenes/SettingsScene.js";
+import CreditsScene from "./scenes/CreditsScene.js";
 
 const config = {
   // O MVP usa apenas formas 2D; Canvas mantém a renderização previsível
@@ -38,7 +41,10 @@ const config = {
     Stage2Scene,
     Stage3Scene,
     StageResultScene,
-    EndingScene
+    EndingScene,
+    InstructionsScene,
+    SettingsScene,
+    CreditsScene
   ]
 };
 
