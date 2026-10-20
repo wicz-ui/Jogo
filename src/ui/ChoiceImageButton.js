@@ -12,6 +12,8 @@ export class ChoiceImageButton {
     imageKey,
     text = "",
     width = 540,
+    fontSize = "20px",
+    textWidthRatio = 0.78,
     onClick = () => {}
   }) {
     this.scene = scene;
@@ -26,7 +28,7 @@ export class ChoiceImageButton {
     const textura = scene.textures.get(imageKey).getSourceImage();
     this.width = width;
     this.height = width * (textura.height / textura.width);
-    this.textWidth = width * 0.78;
+    this.textWidth = width * textWidthRatio;
 
     this.image = scene.add
       .image(0, 0, imageKey)
@@ -38,7 +40,7 @@ export class ChoiceImageButton {
       .setAlpha(0);
     this.label = scene.add
       .text(0, 0, text, pixelTextStyle({
-        fontSize: "20px",
+        fontSize,
         align: "center",
         lineSpacing: 1,
         maxLines: 2,

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import {
   carregarPerfil,
   criarNovoPerfil,
@@ -13,7 +14,7 @@ import {
 } from "./services/Stage1RoomService.js";
 import {
   lixoRecolhidoNaFase2,
-  obterImagemSalaFase2
+  obterTexturaFase2
 } from "./services/Stage2RoomService.js";
 import {
   DEBUG_COLLISIONS,
@@ -21,7 +22,7 @@ import {
   FASE1_COLISOES_LIXO,
   mapearRetanguloColisaoFase1
 } from "./data/stage1Collisions.js";
-import { LISTA_FASES } from "./data/stagesData.js";
+import { FASE2_CONFIG, FASE3_CONFIG, LISTA_FASES } from "./data/stagesData.js";
 import { GAMEPLAY_AREA } from "./data/gameplayLayout.js";
 import {
   DEBUG_COLLISIONS_FASE2,
@@ -32,6 +33,15 @@ import {
   mapearRaioImagemFase2,
   mapearRetanguloColisaoFase2
 } from "./data/stage2Collisions.js";
+import {
+  DEBUG_COLLISIONS_FASE3,
+  FASE3_AREA_CAMINHAVEL,
+  FASE3_COLISOES_FIXAS,
+  mapearPontoImagemFase3,
+  mapearRaioImagemFase3,
+  mapearRetanguloColisaoFase3
+} from "./data/stage3Collisions.js";
+import { obterTexturaFase3 } from "./services/Stage3RoomService.js";
 
 const INTERACOES_OBRIGATORIAS = [
   "computador_01",
@@ -230,43 +240,237 @@ console.log("OK: as oito combinações, escolhas negativas, formatos salvos e re
 
 console.log("=== Teste 14.2: a arte da Fase 2 segue escolhas positivas e persistidas ===");
 const combinacoesVisuaisFase2 = [
-  [[], "Fase2Desarrumada"],
-  [["fase2_recolher_lixo"], "Fase2ArrumadaLixo"],
-  [["fase2_recolher_lixo", "fase2_sinalizar_liquido"], "Fase2ArrumadaLixoLiquido"],
+  ["000", [], "Fase2Desarrumada"],
+  ["100", ["fase2_recolher_lixo"], "Fase2ArrumadaLixo"],
+  ["010", ["fase2_sinalizar_liquido"], "Fase2ArrumadaLiquido"],
+  ["001", ["fase2_ajudar_colega"], "Fase2ArrumadaConversa"],
+  ["110", ["fase2_recolher_lixo", "fase2_sinalizar_liquido"], "Fase2ArrumadaLixoLiquido"],
+  ["101", ["fase2_recolher_lixo", "fase2_ajudar_colega"], "Fase2ArrumadaLixoConversa"],
+  ["011", ["fase2_sinalizar_liquido", "fase2_ajudar_colega"], "Fase2ArrumadaLiquidoConversa"],
   [
+    "111",
     ["fase2_recolher_lixo", "fase2_sinalizar_liquido", "fase2_ajudar_colega"],
     "Fase2ArrumadaLixoLiquidoConversa"
   ]
 ];
-combinacoesVisuaisFase2.forEach(([escolhas, imagemEsperada]) => {
-  assert.equal(obterImagemSalaFase2({ escolhasRealizadas: escolhas }), imagemEsperada);
+combinacoesVisuaisFase2.forEach(([estado, escolhas, imagemEsperada]) => {
+  assert.equal(
+    obterTexturaFase2({ escolhasRealizadas: escolhas }),
+    imagemEsperada,
+    `combinação ${estado} deve usar ${imagemEsperada}`
+  );
+  assert.equal(
+    existsSync(new URL(`../public/assets/images/${imagemEsperada}.png`, import.meta.url)),
+    true,
+    `asset ${imagemEsperada}.png deve existir`
+  );
 });
-assert.equal(obterImagemSalaFase2({
+
+const perfilNegativoFase2 = {
   escolhasRealizadas: [
     "fase2_ignorar_lixo",
     "fase2_ignorar_liquido",
     "fase2_ignorar_desrespeito"
   ]
-}), "Fase2Desarrumada");
-assert.equal(obterImagemSalaFase2({
+};
+assert.equal(obterTexturaFase2(perfilNegativoFase2), "Fase2Desarrumada");
+
+const perfilLiquidoDepoisLixo = criarNovoPerfil("Líquido antes do lixo");
+ChoiceService.registrarEscolha(perfilLiquidoDepoisLixo, "fase2_sinalizar_liquido");
+ChoiceService.registrarEscolha(perfilLiquidoDepoisLixo, "fase2_recolher_lixo");
+assert.equal(
+  obterTexturaFase2(perfilLiquidoDepoisLixo),
+  "Fase2ArrumadaLixoLiquido"
+);
+
+const perfilLixoDepoisLiquido = criarNovoPerfil("Lixo antes do líquido");
+ChoiceService.registrarEscolha(perfilLixoDepoisLiquido, "fase2_recolher_lixo");
+ChoiceService.registrarEscolha(perfilLixoDepoisLiquido, "fase2_sinalizar_liquido");
+assert.equal(
+  obterTexturaFase2(perfilLixoDepoisLiquido),
+  "Fase2ArrumadaLixoLiquido"
+);
+
+const perfilLiquidoEConversa = {
   escolhasRealizadas: ["fase2_sinalizar_liquido", "fase2_ajudar_colega"]
-}), "Fase2Desarrumada");
+};
+assert.equal(obterTexturaFase2(perfilLiquidoEConversa), "Fase2ArrumadaLiquidoConversa");
 
 const perfilVisualFase2 = criarNovoPerfil("Estado visual Fase 2");
-ChoiceService.registrarEscolha(perfilVisualFase2, "fase2_recolher_lixo");
 ChoiceService.registrarEscolha(perfilVisualFase2, "fase2_sinalizar_liquido");
+ChoiceService.registrarEscolha(perfilVisualFase2, "fase2_ajudar_colega");
 const perfilVisualFase2Recarregado = carregarPerfil(salvarPerfil(perfilVisualFase2).id);
-assert.equal(obterImagemSalaFase2(perfilVisualFase2Recarregado), "Fase2ArrumadaLixoLiquido");
+assert.equal(obterTexturaFase2(perfilVisualFase2Recarregado), "Fase2ArrumadaLiquidoConversa");
 const outroPerfilVisualFase2 = criarNovoPerfil("Outro estado visual Fase 2");
-assert.equal(obterImagemSalaFase2(outroPerfilVisualFase2), "Fase2Desarrumada");
-assert.equal(obterImagemSalaFase2({
+ChoiceService.registrarEscolha(outroPerfilVisualFase2, "fase2_ajudar_colega");
+assert.equal(obterTexturaFase2(outroPerfilVisualFase2), "Fase2ArrumadaConversa");
+assert.equal(obterTexturaFase2(perfilVisualFase2Recarregado), "Fase2ArrumadaLiquidoConversa");
+
+const perfilLixoConversa = criarNovoPerfil("Lixo e conversa");
+ChoiceService.registrarEscolha(perfilLixoConversa, "fase2_recolher_lixo");
+ChoiceService.registrarEscolha(perfilLixoConversa, "fase2_ajudar_colega");
+const perfilLixoConversaRecarregado = carregarPerfil(salvarPerfil(perfilLixoConversa).id);
+assert.equal(obterTexturaFase2(perfilLixoConversaRecarregado), "Fase2ArrumadaLixoConversa");
+
+const perfilNegativoELiquidoEConversa = criarNovoPerfil("Fase 2 parcial negativa");
+ChoiceService.registrarEscolha(perfilNegativoELiquidoEConversa, "fase2_ignorar_lixo");
+ChoiceService.registrarEscolha(perfilNegativoELiquidoEConversa, "fase2_sinalizar_liquido");
+ChoiceService.registrarEscolha(perfilNegativoELiquidoEConversa, "fase2_ajudar_colega");
+assert.equal(
+  ChoiceService.obterProgressoFase(
+    perfilNegativoELiquidoEConversa,
+    FASE2_CONFIG.interacoesObrigatorias
+  ).texto,
+  "3/3"
+);
+assert.equal(
+  obterTexturaFase2(perfilNegativoELiquidoEConversa),
+  "Fase2ArrumadaLiquidoConversa"
+);
+
+assert.equal(obterTexturaFase2({
   escolhasRealizadas: [
     { choiceId: "fase2_recolher_lixo" },
     { choiceId: "fase2_sinalizar_liquido" },
     { choiceId: "fase2_ajudar_colega" }
   ]
 }), "Fase2ArrumadaLixoLiquidoConversa");
-console.log("OK: quatro estados, escolhas negativas, ordem fora da sequência, reload e perfis independentes.");
+console.log("OK: oito combinações, ordem livre, negativas, 3/3 parcial, persistência e perfis independentes.");
+
+console.log("=== Teste 14.3: a arte da Fase 3 segue as três decisões positivas ===");
+const combinacoesVisuaisFase3 = [
+  ["000", [], "Fase3Desarrumada"],
+  ["100", ["fase3_seguir_procedimento"], "Fase3ArrumadaMaquina"],
+  ["010", ["fase3_respeitar_orientacao"], "Fase3ArrumadaProfessor"],
+  ["001", ["fase3_recusar_risco"], "Fase3ArrumadaColegas"],
+  [
+    "110",
+    ["fase3_seguir_procedimento", "fase3_respeitar_orientacao"],
+    "Fase3ArrumadaMaquinaProfessor"
+  ],
+  [
+    "101",
+    ["fase3_seguir_procedimento", "fase3_recusar_risco"],
+    "Fase3ArrumadaMaquinaColegas"
+  ],
+  [
+    "011",
+    ["fase3_respeitar_orientacao", "fase3_recusar_risco"],
+    "Fase3ArrumadaProfessorColegas"
+  ],
+  [
+    "111",
+    ["fase3_seguir_procedimento", "fase3_respeitar_orientacao", "fase3_recusar_risco"],
+    "Fase3ArrumadaMaquinaProfessorColegas"
+  ]
+];
+
+combinacoesVisuaisFase3.forEach(([estado, choiceIds, imagemEsperada]) => {
+  const perfil = criarPerfilTeste(`Fase 3 ${estado}`);
+  choiceIds.forEach((choiceId) => {
+    assert.equal(ChoiceService.registrarEscolha(perfil, choiceId).sucesso, true);
+  });
+  assert.equal(
+    obterTexturaFase3(perfil),
+    imagemEsperada,
+    `combinação ${estado} deve usar ${imagemEsperada}`
+  );
+  assert.equal(
+    existsSync(new URL(`../public/assets/images/${imagemEsperada}.png`, import.meta.url)),
+    true,
+    `asset ${imagemEsperada}.png deve existir`
+  );
+});
+
+const escolhasFase3 = {
+  maquina: "fase3_seguir_procedimento",
+  professor: "fase3_respeitar_orientacao",
+  colegas: "fase3_recusar_risco"
+};
+const ordensParesFase3 = [
+  [[escolhasFase3.maquina, escolhasFase3.professor], "Fase3ArrumadaMaquinaProfessor"],
+  [[escolhasFase3.professor, escolhasFase3.maquina], "Fase3ArrumadaMaquinaProfessor"],
+  [[escolhasFase3.maquina, escolhasFase3.colegas], "Fase3ArrumadaMaquinaColegas"],
+  [[escolhasFase3.colegas, escolhasFase3.maquina], "Fase3ArrumadaMaquinaColegas"],
+  [[escolhasFase3.professor, escolhasFase3.colegas], "Fase3ArrumadaProfessorColegas"],
+  [[escolhasFase3.colegas, escolhasFase3.professor], "Fase3ArrumadaProfessorColegas"]
+];
+ordensParesFase3.forEach(([ordem, texturaEsperada]) => {
+  const perfil = criarPerfilTeste("Ordem Fase 3");
+  ordem.forEach((choiceId) => ChoiceService.registrarEscolha(perfil, choiceId));
+  assert.equal(obterTexturaFase3(perfil), texturaEsperada);
+});
+
+const permutacoesFase3 = [
+  [escolhasFase3.maquina, escolhasFase3.professor, escolhasFase3.colegas],
+  [escolhasFase3.maquina, escolhasFase3.colegas, escolhasFase3.professor],
+  [escolhasFase3.professor, escolhasFase3.maquina, escolhasFase3.colegas],
+  [escolhasFase3.professor, escolhasFase3.colegas, escolhasFase3.maquina],
+  [escolhasFase3.colegas, escolhasFase3.maquina, escolhasFase3.professor],
+  [escolhasFase3.colegas, escolhasFase3.professor, escolhasFase3.maquina]
+];
+permutacoesFase3.forEach((ordem) => {
+  const perfil = criarPerfilTeste("Permutação Fase 3");
+  ordem.forEach((choiceId) => ChoiceService.registrarEscolha(perfil, choiceId));
+  assert.equal(obterTexturaFase3(perfil), "Fase3ArrumadaMaquinaProfessorColegas");
+});
+
+const perfilNegativoFase3 = criarPerfilTeste("Fase 3 com decisão negativa");
+[
+  "fase3_seguir_procedimento",
+  "fase3_desrespeitar_orientacao",
+  "fase3_recusar_risco"
+].forEach((choiceId) => {
+  assert.equal(ChoiceService.registrarEscolha(perfilNegativoFase3, choiceId).sucesso, true);
+});
+assert.equal(
+  ChoiceService.obterProgressoFase(perfilNegativoFase3, FASE3_CONFIG.interacoesObrigatorias).texto,
+  "3/3"
+);
+assert.equal(obterTexturaFase3(perfilNegativoFase3), "Fase3ArrumadaMaquinaColegas");
+assert.equal(obterTexturaFase3({
+  escolhasRealizadas: [
+    "fase3_usar_maquina_incorretamente",
+    "fase3_desrespeitar_orientacao",
+    "fase3_aceitar_risco"
+  ]
+}), "Fase3Desarrumada");
+
+const perfilPersistidoFase3 = criarNovoPerfil("Estado visual persistido Fase 3");
+ChoiceService.registrarEscolha(perfilPersistidoFase3, escolhasFase3.maquina);
+ChoiceService.registrarEscolha(perfilPersistidoFase3, escolhasFase3.colegas);
+const perfilRecarregadoFase3 = carregarPerfil(salvarPerfil(perfilPersistidoFase3).id);
+assert.equal(obterTexturaFase3(perfilRecarregadoFase3), "Fase3ArrumadaMaquinaColegas");
+const outroPerfilFase3 = criarNovoPerfil("Perfil independente Fase 3");
+ChoiceService.registrarEscolha(outroPerfilFase3, escolhasFase3.professor);
+assert.equal(obterTexturaFase3(outroPerfilFase3), "Fase3ArrumadaProfessor");
+assert.equal(obterTexturaFase3(perfilRecarregadoFase3), "Fase3ArrumadaMaquinaColegas");
+
+assert.equal(DEBUG_COLLISIONS_FASE3, false);
+const imagemMapeamentoFase3 = {
+  x: 80,
+  y: 160,
+  width: 1877,
+  height: 838,
+  displayWidth: 1120,
+  displayHeight: 1120 * 838 / 1877,
+  originX: 0,
+  originY: 0
+};
+const jogadorInicialFase3 = mapearPontoImagemFase3(810, 665, imagemMapeamentoFase3);
+const areaMapeadaFase3 = mapearRetanguloColisaoFase3(
+  FASE3_AREA_CAMINHAVEL,
+  imagemMapeamentoFase3
+);
+assert.ok(jogadorInicialFase3.x > areaMapeadaFase3.x - areaMapeadaFase3.width / 2);
+assert.ok(jogadorInicialFase3.x < areaMapeadaFase3.x + areaMapeadaFase3.width / 2);
+assert.ok(jogadorInicialFase3.y > areaMapeadaFase3.y - areaMapeadaFase3.height / 2);
+assert.ok(jogadorInicialFase3.y < areaMapeadaFase3.y + areaMapeadaFase3.height / 2);
+assert.ok(mapearRaioImagemFase3(150, imagemMapeamentoFase3) > 0);
+const idsColisoesFase3 = new Set(FASE3_COLISOES_FIXAS.map(({ id }) => id));
+["maquina-principal", "professor", "colega-esquerdo", "colega-central", "colega-direito"]
+  .forEach((id) => assert.equal(idsColisoesFase3.has(id), true, `falta hitbox ${id}`));
+console.log("OK: 8 estados, ordem livre, negativas, 3/3 parcial, reload, perfis independentes e hitboxes.");
 
 console.log("=== Teste 15: perfis João e Maria têm progresso independente ===");
 const joao = criarNovoPerfil("João Marco 2");
@@ -847,4 +1051,4 @@ assert.ok(pisoFase2.y + pisoFase2.height / 2 <= imagemFase2Mapeada.y + imagemFas
 assert.throws(() => mapearRetanguloColisaoFase2(FASE2_AREA_CAMINHAVEL, null), TypeError);
 console.log("OK: piso, pontos, raios e hitboxes usam a escala uniforme do mapa; lixo é dinâmico.");
 
-console.log("\nTodos os testes de lógica dos Marcos 2, 3, 4, colisões das Fases 1 e 2 e visual da Fase 2 passaram.");
+console.log("\nTodos os testes dos Marcos 2, 3 e 4, das Fases 1, 2 e 3 e das colisões passaram.");

@@ -10,7 +10,7 @@ import Player from "../entities/Player.js";
 import { ChoiceDialog } from "../ui/ChoiceDialog.js";
 import { HUD } from "../ui/HUD.js";
 import { InteractionPrompt } from "../ui/InteractionPrompt.js";
-import { criarBotao } from "../ui/GameButton.js";
+import { CHALK_TEXTURES, criarBotaoGiz } from "../ui/ChalkButton.js";
 import { pixelTextStyle } from "../ui/TextStyles.js";
 import { GAMEPLAY_AREA } from "../data/gameplayLayout.js";
 
@@ -338,45 +338,52 @@ export class BaseStageScene extends Phaser.Scene {
   }
 
   criarModalConclusao() {
+    const quadroTextura = this.textures.get(CHALK_TEXTURES.board).getSourceImage();
+    const larguraQuadro = Math.min(900, this.cameras.main.width * 0.76);
+    const alturaQuadro = larguraQuadro * (quadroTextura.height / quadroTextura.width);
+
     this.conclusaoOverlay = this.add
       .rectangle(640, 360, 1280, 720, 0x000000, 0.72)
       .setDepth(60)
       .setInteractive();
     this.conclusaoPanel = this.add
-      .rectangle(640, 360, 720, 350, 0x102b43, 1)
-      .setStrokeStyle(3, 0x9ff5b5, 1)
+      .image(640, 360, CHALK_TEXTURES.board)
+      .setDisplaySize(larguraQuadro, alturaQuadro)
       .setDepth(61);
     this.conclusaoTitulo = this.add
-      .text(640, 255, this.stageConfig.tituloConclusao || "FASE CONCLUÍDA", pixelTextStyle({
-        color: "#9ff5b5",
+      .text(640, 258, this.stageConfig.tituloConclusao || "FASE CONCLUÍDA", pixelTextStyle({
         fontSize: "38px",
-        fontStyle: "bold"
-      }, { preservarCor: true }))
-      .setOrigin(0.5)
-      .setDepth(62);
-    this.conclusaoMensagem = this.add
-      .text(640, 335, this.stageConfig.mensagemConclusao, pixelTextStyle({
-        fontSize: "22px",
         align: "center",
-        wordWrap: { width: 590 }
+        wordWrap: { width: 660 }
       }))
       .setOrigin(0.5)
       .setDepth(62);
-    this.finalizarButton = criarBotao(
-      this,
-      640,
-      450,
-      this.stageConfig.botaoConclusao || "FINALIZAR FASE",
-      () => this.finalizarFase(),
-      { width: 310, height: 60, fontSize: "21px", color: 0x287d5b }
-    ).setDepth(62);
+    this.conclusaoMensagem = this.add
+      .text(640, 350, this.stageConfig.mensagemConclusao, pixelTextStyle({
+        fontSize: "22px",
+        align: "center",
+        lineSpacing: 5,
+        wordWrap: { width: 660, useAdvancedWrap: true }
+      }))
+      .setOrigin(0.5)
+      .setDepth(62);
+    this.finalizarButton = criarBotaoGiz(this, {
+      x: 640,
+      y: 458,
+      label: this.stageConfig.botaoConclusao || "FINALIZAR FASE",
+      color: "blue",
+      width: 370,
+      fontSize: "21px",
+      onClick: () => this.finalizarFase()
+    });
+    this.finalizarButton.setDepth(62);
 
     this.conclusaoElements = [
       this.conclusaoOverlay,
       this.conclusaoPanel,
       this.conclusaoTitulo,
       this.conclusaoMensagem,
-      this.finalizarButton
+      this.finalizarButton.container
     ];
     this.ocultarConclusao();
   }

@@ -2,7 +2,7 @@ import BaseStageScene from "./BaseStageScene.js";
 import { FASE2_CONFIG } from "../data/stagesData.js";
 import {
   lixoRecolhidoNaFase2,
-  obterImagemSalaFase2
+  obterTexturaFase2
 } from "../services/Stage2RoomService.js";
 import { pixelTextStyle } from "../ui/TextStyles.js";
 import { GAMEPLAY_AREA } from "../data/gameplayLayout.js";
@@ -19,7 +19,11 @@ import {
 const IMAGENS_SALA = {
   Fase2Desarrumada: "/assets/images/Fase2Desarrumada.png",
   Fase2ArrumadaLixo: "/assets/images/Fase2ArrumadaLixo.png",
+  Fase2ArrumadaLiquido: "/assets/images/Fase2ArrumadaLiquido.png",
+  Fase2ArrumadaConversa: "/assets/images/Fase2ArrumadaConversa.png",
   Fase2ArrumadaLixoLiquido: "/assets/images/Fase2ArrumadaLixoLiquido.png",
+  Fase2ArrumadaLixoConversa: "/assets/images/Fase2ArrumadaLixoConversa.png",
+  Fase2ArrumadaLiquidoConversa: "/assets/images/Fase2ArrumadaLiquidoConversa.png",
   Fase2ArrumadaLixoLiquidoConversa: "/assets/images/Fase2ArrumadaLixoLiquidoConversa.png"
 };
 
@@ -61,7 +65,7 @@ export class Stage2Scene extends BaseStageScene {
 
   desenharSala() {
     this.imagemSala = this.add
-      .image(0, 0, obterImagemSalaFase2(this.perfil))
+      .image(0, 0, obterTexturaFase2(this.perfil))
       .setOrigin(0, 0)
       .setDepth(-3);
 
@@ -182,7 +186,7 @@ export class Stage2Scene extends BaseStageScene {
   }
 
   atualizarImagemSala() {
-    this.imagemSala?.setTexture(obterImagemSalaFase2(this.perfil));
+    this.imagemSala?.setTexture(obterTexturaFase2(this.perfil));
   }
 }
 

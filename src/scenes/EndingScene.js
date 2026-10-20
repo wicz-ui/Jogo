@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import { carregarPerfilAtivo, salvarPerfil } from "../data/ProfileRepository.js";
 import { EndingService } from "../services/EndingService.js";
-import { criarBotao } from "../ui/GameButton.js";
+import { criarBotaoGiz, CHALK_TEXTURES, preloadChalkAssets } from "../ui/ChalkButton.js";
+import { iniciarSchoolBackdrop, preloadSchoolBackdrop } from "../ui/SchoolBackdrop.js";
 import { pixelTextStyle } from "../ui/TextStyles.js";
 
 export class EndingScene extends Phaser.Scene {
@@ -11,6 +12,11 @@ export class EndingScene extends Phaser.Scene {
 
   init(data) {
     this.perfil = data?.perfil || carregarPerfilAtivo();
+  }
+
+  preload() {
+    preloadSchoolBackdrop(this);
+    preloadChalkAssets(this, { board: true, colors: ["blue", "pink"] });
   }
 
   create() {
@@ -26,60 +32,90 @@ export class EndingScene extends Phaser.Scene {
       this.perfil = salvarPerfil(this.perfil);
     }
 
+    iniciarSchoolBackdrop(this);
+
+    const { width, height } = this.cameras.main;
+    const quadroTextura = this.textures.get(CHALK_TEXTURES.board).getSourceImage();
+    const escalaQuadro = Math.min(
+      (width - 48) / quadroTextura.width,
+      (height - 36) / quadroTextura.height
+    );
+    const larguraQuadro = quadroTextura.width * escalaQuadro;
+    const escalaLayout = larguraQuadro / 1177;
+    const areaTexto = larguraQuadro * 0.82;
     const pontuacao = this.perfil.pontuacao || {};
-    this.add.rectangle(640, 360, 1280, 720, 0x081a2d, 1);
-    this.add
-      .rectangle(640, 360, 900, 590, 0x102b43, 1)
-      .setStrokeStyle(3, 0x8fe6e4, 1);
 
     this.add
-      .text(640, 112, desfecho.titulo, pixelTextStyle({
-        color: desfecho.id === "guardiao" ? "#9ff5b5" : "#ffffff",
-        fontSize: "38px",
-        fontStyle: "bold",
-        align: "center",
-        wordWrap: { width: 790 }
-      }, { preservarCor: true }))
-      .setOrigin(0.5);
+      .image(width / 2, height / 2, CHALK_TEXTURES.board)
+      .setDisplaySize(larguraQuadro, quadroTextura.height * escalaQuadro)
+      .setDepth(0);
 
     this.add
-      .text(640, 225, desfecho.mensagem, pixelTextStyle({
-        fontSize: "23px",
+      .text(width / 2, height * 0.25, desfecho.titulo, pixelTextStyle({
+        fontSize: `${38 * escalaLayout}px`,
         align: "center",
-        lineSpacing: 10,
-        wordWrap: { width: 740 }
+        wordWrap: { width: areaTexto, useAdvancedWrap: true }
       }))
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setDepth(1);
+
+    this.add
+      .text(width / 2, height * 0.36, desfecho.mensagem, pixelTextStyle({
+        fontSize: `${22 * escalaLayout}px`,
+        align: "center",
+        lineSpacing: 6 * escalaLayout,
+        wordWrap: { width: areaTexto, useAdvancedWrap: true }
+      }))
+      .setOrigin(0.5)
+      .setDepth(1);
+
+    this.add
+      .text(width / 2, height * 0.49, `Perfil: ${this.perfil.nome || "Jogador"}`, pixelTextStyle({
+        fontSize: `${24 * escalaLayout}px`,
+        align: "center",
+        wordWrap: { width: areaTexto, useAdvancedWrap: true }
+      }))
+      .setOrigin(0.5)
+      .setDepth(1);
 
     this.add
       .text(
-        640,
-        390,
-        `Perfil: ${this.perfil.nome}\n\nCuidado: ${Number(pontuacao.cuidado) || 0}\nConduta: ${Number(pontuacao.conduta) || 0}\nDanos: ${Number(pontuacao.danos) || 0}`,
+        width / 2,
+        height * 0.60,
+        `Cuidado: ${Number(pontuacao.cuidado) || 0}   •   Conduta: ${Number(pontuacao.conduta) || 0}\nDanos: ${Number(pontuacao.danos) || 0}`,
         pixelTextStyle({
-          fontSize: "24px",
+          fontSize: `${21 * escalaLayout}px`,
           align: "center",
-          lineSpacing: 7
+          lineSpacing: 5 * escalaLayout,
+          wordWrap: { width: areaTexto, useAdvancedWrap: true }
         })
       )
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setDepth(1);
 
-    criarBotao(
-      this,
-      470,
-      585,
-      "VER FASES",
-      () => this.scene.start("StageSelectScene", { perfil: this.perfil }),
-      { width: 260, height: 54, fontSize: "19px" }
-    );
-    criarBotao(
-      this,
-      770,
-      585,
-      "MENU PRINCIPAL",
-      () => this.scene.start("MainMenuScene"),
-      { width: 260, height: 54, fontSize: "19px", color: 0x287d5b }
-    );
+    const larguraBotao = Math.min(360 * escalaLayout, areaTexto * 0.37);
+    const distanciaBotoes = larguraQuadro * 0.19;
+    const yBotoes = height * 0.765;
+
+    criarBotaoGiz(this, {
+      x: width / 2 - distanciaBotoes,
+      y: yBotoes,
+      label: "VER FASES",
+      color: "blue",
+      width: larguraBotao,
+      fontSize: `${22 * escalaLayout}px`,
+      onClick: () => this.scene.start("StageSelectScene", { perfil: this.perfil })
+    }).setDepth(2);
+
+    criarBotaoGiz(this, {
+      x: width / 2 + distanciaBotoes,
+      y: yBotoes,
+      label: "MENU PRINCIPAL",
+      color: "pink",
+      width: larguraBotao,
+      fontSize: `${22 * escalaLayout}px`,
+      onClick: () => this.scene.start("MainMenuScene")
+    }).setDepth(2);
   }
 }
 

@@ -121,15 +121,15 @@ export class ProfileScene extends Phaser.Scene {
       position: "absolute",
       zIndex: "10",
       padding: "0 14px",
-      border: "2px solid #333333",
-      borderRadius: "9px",
-      background: "#ffffff",
-      color: "#1b1b1b",
+      border: "3px solid #a96936",
+      borderRadius: "0",
+      background: "#103d2e",
+      color: "#ffffff",
       fontFamily: '"Pixelify Sans"',
       fontWeight: "700",
       boxSizing: "border-box",
       outline: "none",
-      boxShadow: "0 3px 12px rgba(0, 0, 0, 0.4)",
+      boxShadow: "0 4px 0 rgba(54, 29, 15, 0.9), inset 0 0 0 2px rgba(255, 255, 255, 0.08)",
       transform: "translate(-50%, -50%)"
     });
     this.gameContainer.appendChild(this.nameInput);

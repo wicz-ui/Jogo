@@ -6,11 +6,16 @@ const ESCOLHAS_VISUAIS = Object.freeze({
   conversa: "fase2_ajudar_colega"
 });
 
-const IMAGENS_POR_PROGRESSO = Object.freeze({
-  desarrumada: "Fase2Desarrumada",
-  lixo: "Fase2ArrumadaLixo",
-  liquido: "Fase2ArrumadaLixoLiquido",
-  conversa: "Fase2ArrumadaLixoLiquidoConversa"
+// A ordem dos bits é: lixo, líquido, conversa.
+const TEXTURAS_POR_ESTADO = Object.freeze({
+  "000": "Fase2Desarrumada",
+  "100": "Fase2ArrumadaLixo",
+  "010": "Fase2ArrumadaLiquido",
+  "001": "Fase2ArrumadaConversa",
+  "110": "Fase2ArrumadaLixoLiquido",
+  "101": "Fase2ArrumadaLixoConversa",
+  "011": "Fase2ArrumadaLiquidoConversa",
+  "111": "Fase2ArrumadaLixoLiquidoConversa"
 });
 
 function obterIdsEscolhidos(perfil) {
@@ -23,8 +28,8 @@ function obterIdsEscolhidos(perfil) {
     .filter(Boolean));
 }
 
-function escolhaPositivaRealizada(idsEscolhidos, item) {
-  const choiceId = ESCOLHAS_VISUAIS[item];
+function escolhaPositivaRealizada(idsEscolhidos, situacao) {
+  const choiceId = ESCOLHAS_VISUAIS[situacao];
   return idsEscolhidos.has(choiceId) && CHOICES[choiceId]?.tipo === "positiva";
 }
 
@@ -32,17 +37,12 @@ export function lixoRecolhidoNaFase2(perfil) {
   return escolhaPositivaRealizada(obterIdsEscolhidos(perfil), "lixo");
 }
 
-/** Deriva a arte do corredor somente das escolhas positivas salvas no perfil. */
-export function obterImagemSalaFase2(perfil) {
-  const escolhas = obterIdsEscolhidos(perfil);
-  const lixo = escolhaPositivaRealizada(escolhas, "lixo");
-  const liquido = escolhaPositivaRealizada(escolhas, "liquido");
-  const conversa = escolhaPositivaRealizada(escolhas, "conversa");
+/** Retorna a textura correspondente somente às três escolhas positivas salvas. */
+export function obterTexturaFase2(perfil) {
+  const idsEscolhidos = obterIdsEscolhidos(perfil);
+  const estado = ["lixo", "liquido", "conversa"]
+    .map((situacao) => escolhaPositivaRealizada(idsEscolhidos, situacao) ? "1" : "0")
+    .join("");
 
-  // As artes são cumulativas. Se ações posteriores forem feitas primeiro,
-  // exibe o estado mais avançado cuja sequência visual está completa.
-  if (lixo && liquido && conversa) return IMAGENS_POR_PROGRESSO.conversa;
-  if (lixo && liquido) return IMAGENS_POR_PROGRESSO.liquido;
-  if (lixo) return IMAGENS_POR_PROGRESSO.lixo;
-  return IMAGENS_POR_PROGRESSO.desarrumada;
+  return TEXTURAS_POR_ESTADO[estado];
 }

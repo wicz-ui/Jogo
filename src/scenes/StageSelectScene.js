@@ -3,7 +3,7 @@ import { carregarPerfilAtivo } from "../data/ProfileRepository.js";
 import { LISTA_FASES } from "../data/stagesData.js";
 import { EndingService } from "../services/EndingService.js";
 import { ProgressionService } from "../services/ProgressionService.js";
-import { criarBotao } from "../ui/GameButton.js";
+import { criarBotaoGiz, preloadChalkAssets } from "../ui/ChalkButton.js";
 import { criarBotaoImagem } from "../ui/ImageButton.js";
 import { pixelTextStyle } from "../ui/TextStyles.js";
 
@@ -50,6 +50,8 @@ export class StageSelectScene extends Phaser.Scene {
   }
 
   preload() {
+    preloadChalkAssets(this, { colors: ["pink"] });
+
     [
       IMAGENS_SELECAO.quadro,
       IMAGENS_SELECAO.botaoJogar,
@@ -105,14 +107,15 @@ export class StageSelectScene extends Phaser.Scene {
     LISTA_FASES.forEach((fase, index) => this.criarCard(fase, index));
 
     if (this.perfil.progresso?.campanhaConcluida) {
-      this.finalButton = criarBotao(
-        this,
-        width / 2,
-        546,
-        "VER RESULTADO FINAL",
-        () => this.scene.start("EndingScene", { perfil: this.perfil }),
-        { width: 330, height: 52, fontSize: "19px", color: 0x287d5b }
-      );
+      this.finalButton = criarBotaoGiz(this, {
+        x: width / 2,
+        y: 546,
+        label: "VER RESULTADO FINAL",
+        color: "pink",
+        width: 370,
+        fontSize: "19px",
+        onClick: () => this.scene.start("EndingScene", { perfil: this.perfil })
+      });
     }
 
     this.feedbackText = this.add

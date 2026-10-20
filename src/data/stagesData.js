@@ -92,11 +92,10 @@ const FASE2_INTERACOES = [
 const FASE3_INTERACOES = [
   {
     id: "fase3_maquina_01",
-    visual: "maquina",
-    label: "MÁQUINA",
-    x: 940,
-    y: 310,
-    raioInteracao: 135,
+    // Coordenadas em pixels da arte original da Fase 3 (1877 × 838).
+    x: 1450,
+    y: 275,
+    raioInteracao: 150,
     titulo: "Máquina e procedimento",
     mensagem: "A máquina está pronta para a atividade.\nO que deseja fazer?",
     opcoes: [
@@ -106,11 +105,9 @@ const FASE3_INTERACOES = [
   },
   {
     id: "fase3_risco_01",
-    visual: "colegas",
-    label: "PROPOSTA ARRISCADA",
-    x: 405,
-    y: 505,
-    raioInteracao: 135,
+    x: 240,
+    y: 614,
+    raioInteracao: 150,
     titulo: "Uma proposta arriscada",
     mensagem: "Um colega propõe usar o equipamento\nde uma maneira arriscada.\nO que deseja fazer?",
     opcoes: [
@@ -120,11 +117,9 @@ const FASE3_INTERACOES = [
   },
   {
     id: "fase3_professor_01",
-    visual: "responsavel",
-    label: "ORIENTAÇÃO",
-    x: 720,
-    y: 345,
-    raioInteracao: 135,
+    x: 1005,
+    y: 350,
+    raioInteracao: 125,
     titulo: "Orientação do responsável",
     mensagem: "O professor/laboratorista orienta como\nutilizar o equipamento com segurança.\nO que deseja fazer?",
     opcoes: [
@@ -195,15 +190,9 @@ export const FASE3_CONFIG = {
   mensagemConclusao: "Você concluiu a última etapa da campanha.",
   botaoConclusao: "FINALIZAR CAMPANHA",
   exibirDanos: true,
-  jogadorInicial: { x: 230, y: 430 },
-  sala: {
-    backgroundColor: 0x263b4e,
-    gridColor: 0x496276,
-    borderColor: 0xf0b44d,
-    destaque: "MÁQUINAS\nE SEGURANÇA",
-    destaqueX: 180,
-    destaqueY: 255
-  },
+  // Coordenadas em pixels da arte original; Stage3Scene converte ao mundo.
+  jogadorInicial: { x: 810, y: 665 },
+  sala: {},
   interacoesObrigatorias: [
     "fase3_maquina_01",
     "fase3_risco_01",
