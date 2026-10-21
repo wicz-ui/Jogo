@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import {
   carregarPerfil,
-  criarNovoPerfil,
-  salvarPerfil
+  criarNovoPerfil as criarPerfilNoRepositorio,
+  salvarPerfil,
+  vincularPersonagemPerfil
 } from "./data/ProfileRepository.js";
 import { ChoiceService } from "./services/ChoiceService.js";
 import { ProgressionService } from "./services/ProgressionService.js";
@@ -43,10 +44,19 @@ import {
 } from "./data/stage3Collisions.js";
 import { obterTexturaFase3 } from "./services/Stage3RoomService.js";
 import {
+  CHARACTER_FRAME_ASSETS,
+  CHARACTER_FRAMES,
   PLAYABLE_CHARACTER_IDS,
   PLAYABLE_CHARACTERS
 } from "./data/charactersData.js";
 import { CharacterService } from "./services/CharacterService.js";
+import {
+  obterVetorMovimento,
+  PLAYER_DIRECTION_VECTORS,
+  PLAYER_MOVEMENT_SPEED,
+  PLAYER_WALK_FRAME_RATE,
+  resolverDirecaoPrioritaria
+} from "./entities/playerMovement.js";
 
 const INTERACOES_OBRIGATORIAS = [
   "computador_01",
@@ -62,6 +72,12 @@ function criarPerfilTeste(nome = "João") {
     progresso: { faseAtual: 1, fasesConcluidas: [] },
     escolhasRealizadas: []
   };
+}
+
+// Os perfis auxiliares dos testes recebem um personagem válido explicitamente;
+// o repositório não fornece mais um personagem implícito.
+function criarNovoPerfil(nome, personagemId = "abner") {
+  return criarPerfilNoRepositorio(nome, personagemId);
 }
 
 function registrarTodasAsEscolhas(perfil) {
@@ -981,7 +997,7 @@ assert.deepEqual(idsFase3, [
 ]);
 console.log("OK: três fases e IDs da Fase 3 estão centralizados em stagesData.js.");
 
-console.log("=== Teste 44.1: seleção independente e persistente de personagem ===");
+console.log("=== Teste 44.1: seleção manual e persistente de personagem ===");
 assert.deepEqual(PLAYABLE_CHARACTER_IDS, [
   "abner",
   "dorival",
@@ -990,52 +1006,137 @@ assert.deepEqual(PLAYABLE_CHARACTER_IDS, [
   "matheus",
   "rosy"
 ]);
-Object.values(PLAYABLE_CHARACTERS).forEach(({ path }) => {
-  assert.equal(existsSync(`public${path}`), true, `Asset não encontrado: public${path}`);
+assert.deepEqual(Object.keys(CHARACTER_FRAMES), PLAYABLE_CHARACTER_IDS);
+assert.deepEqual(Object.keys(CHARACTER_FRAME_ASSETS), PLAYABLE_CHARACTER_IDS);
+assert.equal(Object.values(CHARACTER_FRAME_ASSETS).flat().length, 48);
+
+const nomesBaseDosPersonagens = {
+  abner: "Abner",
+  dorival: "Dorival",
+  edson: "Edson",
+  lucas: "Lucas",
+  matheus: "Matheus",
+  rosy: "Rosy"
+};
+const sufixosPorDirecao = {
+  down: "Down",
+  left: "Left",
+  right: "Right",
+  up: "Top"
+};
+
+PLAYABLE_CHARACTER_IDS.forEach((id) => {
+  assert.deepEqual(Object.keys(CHARACTER_FRAMES[id]), ["down", "left", "right", "up"]);
+  Object.entries(CHARACTER_FRAMES[id]).forEach(([direction, textureKeys]) => {
+    assert.equal(textureKeys.length, 2, `${id} precisa de dois frames em ${direction}.`);
+  });
+
+  const assets = CHARACTER_FRAME_ASSETS[id];
+  assert.equal(assets.length, 8, `${id} precisa de oito PNGs individuais.`);
+  assets.forEach(({ direction, frame, textureKey, sourceKey, path }) => {
+    const expectedPath = `/assets/images/${nomesBaseDosPersonagens[id]}` +
+      `${sufixosPorDirecao[direction]}${frame}.png`;
+    assert.equal(path, expectedPath);
+    assert.equal(textureKey, `${id}-${direction}-${frame}`);
+    assert.equal(sourceKey, `${textureKey}-source`);
+    assert.equal(existsSync(`public${path}`), true, `PNG individual ausente: ${path}`);
+  });
+
+  const spriteSheetPath = `public/assets/images/${nomesBaseDosPersonagens[id]}-mov.png`;
+  assert.equal(existsSync(spriteSheetPath), true, `Spritesheet temporária ausente: ${spriteSheetPath}`);
+  assert.equal(PLAYABLE_CHARACTERS[id].path, undefined);
+  assert.equal(PLAYABLE_CHARACTERS[id].texture, undefined);
+  assert.equal(PLAYABLE_CHARACTERS[id].sourceTexture, undefined);
 });
 
-PLAYABLE_CHARACTER_IDS.forEach((idEsperado, indice) => {
-  const perfil = { personagemId: null };
-  const valorAleatorio = indice / PLAYABLE_CHARACTER_IDS.length;
-  assert.equal(
-    CharacterService.obterOuSortearPersonagem(perfil, () => valorAleatorio),
-    idEsperado
-  );
-  assert.equal(perfil.personagemId, idEsperado);
+console.log("OK: os 48 PNGs existem; os nomes seguem o padrão; as spritesheets legadas foram preservadas.");
+
+console.log("=== Teste 44.2: movimento cardinal, prioridade da última tecla e teclas opostas ===");
+assert.equal(PLAYER_MOVEMENT_SPEED, 230);
+assert.equal(PLAYER_WALK_FRAME_RATE, 7);
+assert.deepEqual(Object.keys(PLAYER_DIRECTION_VECTORS).sort(), ["down", "left", "right", "up"]);
+assert.equal(resolverDirecaoPrioritaria([]), null);
+
+const combinacoesDeDirecoes = [
+  ["up", "right"],
+  ["up", "left"],
+  ["down", "right"],
+  ["down", "left"],
+  ["left", "right"],
+  ["up", "down"]
+];
+combinacoesDeDirecoes.forEach(([primeira, ultima]) => {
+  assert.equal(resolverDirecaoPrioritaria([primeira, ultima]), ultima);
+  assert.equal(resolverDirecaoPrioritaria([primeira]), primeira);
 });
 
-const perfilPersonagemAntigo = criarNovoPerfil("Save antigo sem personagem");
-delete perfilPersonagemAntigo.personagemId;
-salvarPerfil(perfilPersonagemAntigo);
-const perfilMigrado = carregarPerfil(perfilPersonagemAntigo.id);
-assert.equal(perfilMigrado.personagemId, null);
-assert.equal(
-  CharacterService.obterOuSortearPersonagem(perfilMigrado, () => 0.99),
-  "rosy"
+["down", "left", "right", "up"].forEach((direction) => {
+  const vector = obterVetorMovimento(direction);
+  assert.equal(Math.abs(vector.x) + Math.abs(vector.y), 1);
+  assert.ok(vector.x === 0 || vector.y === 0, `${direction} não pode ser diagonal.`);
+});
+assert.deepEqual(obterVetorMovimento("desconhecida"), { x: 0, y: 0 });
+console.log("OK: sempre há no máximo um eixo; a tecla mais recente vence e, ao soltá-la, volta a anterior.");
+
+PLAYABLE_CHARACTER_IDS.forEach((id) => {
+  assert.equal(CharacterService.isPlayableCharacterId(id), true);
+});
+assert.equal(CharacterService.isPlayableCharacterId("toString"), false);
+assert.equal(CharacterService.isPlayableCharacterId(null), false);
+PLAYABLE_CHARACTER_IDS.forEach((id) => {
+  const perfil = criarPerfilNoRepositorio(`Teste ${id}`, id);
+  assert.equal(perfil.personagemId, id);
+  assert.equal(carregarPerfil(perfil.id).personagemId, id);
+});
+assert.throws(
+  () => criarPerfilNoRepositorio("Perfil sem personagem"),
+  /Escolha um personagem para continuar\./
 );
-salvarPerfil(perfilMigrado);
-assert.equal(carregarPerfil(perfilPersonagemAntigo.id).personagemId, "rosy");
-assert.equal(
-  CharacterService.obterOuSortearPersonagem(perfilMigrado, () => {
-    throw new Error("Um personagem já escolhido não deve ser sorteado outra vez.");
-  }),
-  "rosy"
+assert.throws(
+  () => criarPerfilNoRepositorio("Personagem inválido", "toString"),
+  /Escolha um personagem para continuar\./
 );
 
-const perfilOutroPersonagem = criarNovoPerfil("Outro perfil visual");
-assert.equal(
-  CharacterService.obterOuSortearPersonagem(perfilOutroPersonagem, () => 0.2),
-  "dorival"
+const perfilLucas = criarPerfilNoRepositorio("Perfil Lucas", "lucas");
+assert.equal(perfilLucas.personagemId, "lucas");
+assert.equal(carregarPerfil(perfilLucas.id).personagemId, "lucas");
+const perfilRosy = criarPerfilNoRepositorio("Perfil Rosy", "rosy");
+assert.equal(perfilRosy.personagemId, "rosy");
+assert.equal(carregarPerfil(perfilLucas.id).personagemId, "lucas");
+
+const perfilPersonagemAntigo = salvarPerfil({
+  id: "perfil-legado-sem-personagem",
+  nome: "Save antigo sem personagem",
+  pontuacao: { cuidado: 30, conduta: 24, danos: 1 },
+  progresso: { faseAtual: 3, fasesConcluidas: [1, 2], campanhaConcluida: false },
+  escolhasRealizadas: ["recolher_lixo", "fase2_sinalizar_liquido"]
+});
+assert.equal(perfilPersonagemAntigo.personagemId, null);
+const perfilMigrado = vincularPersonagemPerfil(perfilPersonagemAntigo.id, "matheus");
+assert.equal(perfilMigrado.personagemId, "matheus");
+assert.deepEqual(perfilMigrado.pontuacao, { cuidado: 30, conduta: 24, danos: 1 });
+assert.deepEqual(perfilMigrado.progresso, {
+  faseAtual: 3,
+  fasesConcluidas: [1, 2],
+  campanhaConcluida: false
+});
+assert.deepEqual(perfilMigrado.escolhasRealizadas, ["recolher_lixo", "fase2_sinalizar_liquido"]);
+assert.equal(carregarPerfil(perfilPersonagemAntigo.id).personagemId, "matheus");
+assert.throws(
+  () => vincularPersonagemPerfil(perfilPersonagemAntigo.id, "toString"),
+  /não é válido/
 );
-assert.equal(carregarPerfil(perfilPersonagemAntigo.id).personagemId, "rosy");
-const perfilComPersonagemInvalido = criarNovoPerfil("Save com personagem inválido");
-perfilComPersonagemInvalido.personagemId = "toString";
-assert.equal(salvarPerfil(perfilComPersonagemInvalido).personagemId, null);
+
 assert.equal(
-  CharacterService.obterOuSortearPersonagem(perfilComPersonagemInvalido, () => 0),
-  "abner"
+  salvarPerfil({ ...perfilLucas, personagemId: "rosy" }).personagemId,
+  "lucas",
+  "salvamentos posteriores não podem trocar personagem vinculado"
 );
-console.log("OK: os seis IDs são sorteáveis; save antigo migra e perfis mantêm personagens distintos.");
+assert.throws(
+  () => vincularPersonagemPerfil(perfilLucas.id, "rosy"),
+  /já está vinculado/
+);
+console.log("OK: criação exige ID permitido, perfis ficam independentes e saves antigos recebem personagem sem perder dados.");
 
 console.log("=== Teste 45: hitboxes fixas e lixo dinâmico da Fase 1 ===");
 assert.equal(FASE1_COLISOES_FIXAS.length, 12);

@@ -40,7 +40,7 @@ function gerarId() {
   return `perfil-${Date.now()}-${sufixo}`;
 }
 
-function criarPerfilBase(nome) {
+function criarPerfilBase(nome, personagemId) {
   return {
     id: gerarId(),
     nome,
@@ -55,7 +55,7 @@ function criarPerfilBase(nome) {
       campanhaConcluida: false
     },
     escolhasRealizadas: [],
-    personagemId: null
+    personagemId
   };
 }
 
@@ -138,6 +138,11 @@ function salvarPerfil(perfil) {
   const indice = perfis.findIndex((item) => item.id === perfilSalvo.id);
 
   if (indice >= 0) {
+    // Depois de vinculado, o personagem é parte da identidade do perfil.
+    // Uma atualização de progresso nunca pode trocá-lo nem apagá-lo.
+    if (perfis[indice].personagemId) {
+      perfilSalvo.personagemId = perfis[indice].personagemId;
+    }
     perfis[indice] = perfilSalvo;
   } else {
     perfis.push(perfilSalvo);
@@ -194,14 +199,35 @@ function carregarPerfilAtivo() {
   return clonar(perfilAtivo);
 }
 
-function criarNovoPerfil(nomeDoJogador) {
+function criarNovoPerfil(nomeDoJogador, personagemId) {
   const nome = String(nomeDoJogador ?? "").trim();
 
   if (!nome) {
     throw new Error("Digite um nome para criar o perfil.");
   }
 
-  return salvarPerfil(criarPerfilBase(nome));
+  if (!PLAYABLE_CHARACTER_IDS.includes(personagemId)) {
+    throw new Error("Escolha um personagem para continuar.");
+  }
+
+  return salvarPerfil(criarPerfilBase(nome, personagemId));
+}
+
+/** Vincula manualmente um personagem a um save legado sem alterar seu progresso. */
+function vincularPersonagemPerfil(id, personagemId) {
+  if (!PLAYABLE_CHARACTER_IDS.includes(personagemId)) {
+    throw new Error("O personagem selecionado não é válido.");
+  }
+
+  const perfil = carregarPerfil(id);
+  if (!perfil) return null;
+
+  if (perfil.personagemId && perfil.personagemId !== personagemId) {
+    throw new Error("O personagem deste perfil já está vinculado e não pode ser trocado.");
+  }
+
+  perfil.personagemId = personagemId;
+  return salvarPerfil(perfil);
 }
 
 export {
@@ -210,5 +236,6 @@ export {
   listarPerfis,
   selecionarPerfil,
   carregarPerfilAtivo,
-  criarNovoPerfil
+  criarNovoPerfil,
+  vincularPersonagemPerfil
 };

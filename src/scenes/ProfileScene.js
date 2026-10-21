@@ -3,8 +3,15 @@ import {
   carregarPerfil,
   criarNovoPerfil,
   listarPerfis,
-  selecionarPerfil
+  selecionarPerfil,
+  vincularPersonagemPerfil
 } from "../data/ProfileRepository.js";
+import {
+  CHARACTER_FRAME_ASSETS,
+  PLAYABLE_CHARACTERS,
+  PLAYABLE_CHARACTER_IDS
+} from "../data/charactersData.js";
+import { CharacterService } from "../services/CharacterService.js";
 import { criarBotaoImagem } from "../ui/ImageButton.js";
 import { pixelTextStyle } from "../ui/TextStyles.js";
 
@@ -42,6 +49,8 @@ const TEMPO_FUNDO_VISIVEL = 6500;
 const DURACAO_TRANSICAO = 2200;
 const LARGURA_CARTAO_PERFIL = 430;
 const ESPACO_CARTOES_PERFIL = 10;
+const LARGURA_CARTAO_PERSONAGEM = 166;
+const ALTURA_PREVIEW_PERSONAGEM = 42;
 const AREA_LISTA_PERFIS = {
   topo: 165,
   base: 620,
@@ -53,8 +62,19 @@ export class ProfileScene extends Phaser.Scene {
   constructor() {
     super("ProfileScene");
     this.perfilSelecionado = null;
+    this.personagemSelecionadoId = null;
     this.profileButtons = [];
+    this.characterButtons = [];
     this.emptyProfilesText = null;
+  }
+
+  init(data) {
+    const perfilRecebido = data?.perfil;
+    this.perfilSelecionado = perfilRecebido?.id
+      ? selecionarPerfil(perfilRecebido.id) || carregarPerfil(perfilRecebido.id) || perfilRecebido
+      : null;
+    this.personagemSelecionadoId = this.perfilSelecionado?.personagemId || null;
+    this.mensagemInicial = data?.aviso || "";
   }
 
   preload() {
@@ -71,14 +91,24 @@ export class ProfileScene extends Phaser.Scene {
     IMAGENS_PERFIL.fundos.forEach(({ key, path }) => {
       if (!this.textures.exists(key)) this.load.image(key, path);
     });
+
+    PLAYABLE_CHARACTER_IDS.forEach((id) => {
+      const preview = CHARACTER_FRAME_ASSETS[id].find(
+        ({ direction, frame }) => direction === "down" && frame === 1
+      );
+      const textureKey = `profile-character-${id}`;
+      if (!this.textures.exists(textureKey)) this.load.image(textureKey, preview.path);
+    });
   }
 
   create() {
     this.ancorarInput = this.ancorarInput.bind(this);
+    this.aoDigitarNome = this.aoDigitarNome.bind(this);
+    this.characterButtons = [];
     const { width, height } = this.cameras.main;
     this.layout = {
       inputX: width * 0.25,
-      inputY: 225
+      inputY: 210
     };
 
     this.iniciarSlideshow(width, height);
@@ -133,34 +163,51 @@ export class ProfileScene extends Phaser.Scene {
       transform: "translate(-50%, -50%)"
     });
     this.gameContainer.appendChild(this.nameInput);
+    this.nameInput.addEventListener("input", this.aoDigitarNome);
     this.ancorarInput();
 
-    criarBotaoImagem(
+    this.add
+      .text(width * 0.25, 270, "ESCOLHA SEU PERSONAGEM", pixelTextStyle({
+        fontSize: "21px"
+      }))
+      .setOrigin(0.5);
+    this.criarSelecaoPersonagens(width);
+
+    this.createProfileButton = criarBotaoImagem(
       this,
       width * 0.25,
-      320,
+      520,
       IMAGENS_PERFIL.criarPerfil.key,
       250,
       () => this.criarPerfil()
     );
-    criarBotaoImagem(
+    this.startGameButton = criarBotaoImagem(
       this,
       width * 0.25,
-      420,
+      610,
       IMAGENS_PERFIL.iniciarJogo.key,
       250,
       () => this.iniciarJogo()
     );
 
     this.statusText = this.add
-      .text(width * 0.25, 510, "Selecione um perfil ou crie um novo.", pixelTextStyle({
-        fontSize: "18px",
+      .text(width * 0.25, 680, "Selecione um perfil ou crie um novo.", pixelTextStyle({
+        fontSize: "14px",
         align: "center",
-        wordWrap: { width: 480 }
+        wordWrap: { width: 380 }
       }))
       .setOrigin(0.5);
 
+    if (this.mensagemInicial) {
+      this.statusText.setText(this.mensagemInicial);
+    } else if (this.perfilSelecionado) {
+      this.statusText.setText(this.perfilSelecionado.personagemId
+        ? `Personagem vinculado: ${PLAYABLE_CHARACTERS[this.perfilSelecionado.personagemId].nome}.`
+        : "Escolha um personagem para vincular a este perfil.");
+    }
+
     this.refreshProfiles();
+    this.atualizarSelecaoPersonagens();
 
     criarBotaoImagem(
       this,
@@ -275,9 +322,105 @@ export class ProfileScene extends Phaser.Scene {
     window.removeEventListener("scroll", this.ancorarInput, true);
     window.visualViewport?.removeEventListener("resize", this.ancorarInput);
     this.inputResizeObserver?.disconnect();
+    this.nameInput?.removeEventListener("input", this.aoDigitarNome);
     this.nameInput?.remove();
     this.nameInput = null;
     this.gameContainer = null;
+  }
+
+  criarSelecaoPersonagens(width) {
+    const centroX = width * 0.25;
+    const centrosY = [329, 423];
+
+    PLAYABLE_CHARACTER_IDS.forEach((id, index) => {
+      const coluna = index % 3;
+      const linha = Math.floor(index / 3);
+      const x = centroX + (coluna - 1) * 180;
+      const y = centrosY[linha];
+      const fundo = this.add
+        .image(0, 0, IMAGENS_PERFIL.quadroNormal.key)
+        .setOrigin(0.5);
+      fundo.setScale(LARGURA_CARTAO_PERSONAGEM / fundo.width);
+      const sprite = this.add.image(0, -9, `profile-character-${id}`).setOrigin(0.5);
+      sprite.setScale(ALTURA_PREVIEW_PERSONAGEM / sprite.height);
+      const nome = this.add
+        .text(0, 17, PLAYABLE_CHARACTERS[id].nome, pixelTextStyle({
+          fontSize: "15px",
+          align: "center"
+        }))
+        .setOrigin(0.5);
+      const indicador = this.add
+        .text(0, 31, "✓ SELECIONADO", pixelTextStyle({
+          color: "#b8f5c1",
+          fontSize: "10px",
+          align: "center"
+        }, { preservarCor: true }))
+        .setOrigin(0.5)
+        .setVisible(false);
+      const botao = this.add.container(x, y, [fundo, sprite, nome, indicador]);
+
+      botao.personagemId = id;
+      botao.setSize(LARGURA_CARTAO_PERSONAGEM, 84).setInteractive({ useHandCursor: true });
+      botao.atualizarVisual = (selecionado) => {
+        fundo.setTexture(
+          selecionado
+            ? IMAGENS_PERFIL.quadroDourado.key
+            : IMAGENS_PERFIL.quadroNormal.key
+        );
+        indicador.setVisible(selecionado);
+      };
+      botao.on("pointerover", () => {
+        if (this.perfilTemPersonagemVinculado()) return;
+        this.tweens.add({ targets: botao, scale: 1.035, duration: 100, ease: "Sine.Out" });
+      });
+      botao.on("pointerout", () => {
+        this.tweens.add({ targets: botao, scale: 1, duration: 100, ease: "Sine.Out" });
+      });
+      botao.on("pointerdown", () => this.selecionarPersonagem(id));
+
+      this.characterButtons.push(botao);
+    });
+  }
+
+  perfilTemPersonagemVinculado() {
+    return CharacterService.isPlayableCharacterId(this.perfilSelecionado?.personagemId);
+  }
+
+  atualizarSelecaoPersonagens() {
+    const idSelecionado = this.perfilTemPersonagemVinculado()
+      ? this.perfilSelecionado.personagemId
+      : this.personagemSelecionadoId;
+    const personagemFixado = this.perfilTemPersonagemVinculado();
+
+    this.characterButtons.forEach((botao) => {
+      botao.atualizarVisual(botao.personagemId === idSelecionado);
+      if (botao.input) botao.input.enabled = !personagemFixado;
+    });
+  }
+
+  selecionarPersonagem(personagemId) {
+    if (!CharacterService.isPlayableCharacterId(personagemId)) return;
+    if (this.perfilTemPersonagemVinculado()) {
+      this.statusText.setText("O personagem deste perfil já está vinculado.");
+      return;
+    }
+
+    this.personagemSelecionadoId = personagemId;
+    this.atualizarSelecaoPersonagens();
+    const nome = PLAYABLE_CHARACTERS[personagemId].nome;
+    this.statusText.setText(this.perfilSelecionado
+      ? `${nome} selecionado. Inicie o jogo para vincular ao perfil.`
+      : `${nome} selecionado. Crie o perfil para salvar a escolha.`);
+  }
+
+  aoDigitarNome() {
+    if (!this.nameInput?.value.trim() || !this.perfilSelecionado) return;
+
+    this.perfilSelecionado = null;
+    this.personagemSelecionadoId = null;
+    this.atualizarSelecaoPerfis();
+    this.atualizarSelecaoPersonagens();
+    this.statusText.setText("Novo perfil: escolha um personagem.");
   }
 
   refreshProfiles() {
@@ -401,11 +544,15 @@ export class ProfileScene extends Phaser.Scene {
 
   criarPerfil() {
     try {
-      const perfil = criarNovoPerfil(this.nameInput.value);
+      const perfil = criarNovoPerfil(this.nameInput.value, this.personagemSelecionadoId);
       this.perfilSelecionado = perfil;
+      this.personagemSelecionadoId = perfil.personagemId;
       this.nameInput.value = "";
-      this.statusText.setText(`Perfil ${perfil.nome} criado e selecionado.`);
+      this.statusText.setText(
+        `Perfil ${perfil.nome} criado com ${PLAYABLE_CHARACTERS[perfil.personagemId].nome}.`
+      );
       this.refreshProfiles();
+      this.atualizarSelecaoPersonagens();
     } catch (erro) {
       this.statusText.setText(erro.message);
     }
@@ -420,8 +567,13 @@ export class ProfileScene extends Phaser.Scene {
     }
 
     this.perfilSelecionado = perfil;
-    this.statusText.setText(`Perfil selecionado: ${perfil.nome}.`);
+    this.personagemSelecionadoId = perfil.personagemId || null;
+    this.nameInput.value = "";
+    this.statusText.setText(perfil.personagemId
+      ? `Personagem vinculado: ${PLAYABLE_CHARACTERS[perfil.personagemId].nome}.`
+      : "Escolha um personagem para vincular a este perfil.");
     this.atualizarSelecaoPerfis();
+    this.atualizarSelecaoPersonagens();
   }
 
   iniciarJogo() {
@@ -430,7 +582,25 @@ export class ProfileScene extends Phaser.Scene {
       return;
     }
 
-    const perfilAtualizado = carregarPerfil(this.perfilSelecionado.id) || this.perfilSelecionado;
+    let perfilAtualizado = carregarPerfil(this.perfilSelecionado.id) || this.perfilSelecionado;
+    const personagemId = perfilAtualizado.personagemId || this.personagemSelecionadoId;
+
+    if (!CharacterService.isPlayableCharacterId(personagemId)) {
+      this.statusText.setText("Escolha um personagem para continuar.");
+      return;
+    }
+
+    try {
+      if (!perfilAtualizado.personagemId) {
+        perfilAtualizado = vincularPersonagemPerfil(perfilAtualizado.id, personagemId);
+      }
+    } catch (erro) {
+      this.statusText.setText(erro.message);
+      return;
+    }
+
+    this.perfilSelecionado = perfilAtualizado;
+    this.personagemSelecionadoId = perfilAtualizado.personagemId;
     this.scene.start("StageSelectScene", { perfil: perfilAtualizado });
   }
 }

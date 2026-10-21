@@ -3,6 +3,7 @@ import { carregarPerfilAtivo } from "../data/ProfileRepository.js";
 import { LISTA_FASES } from "../data/stagesData.js";
 import { EndingService } from "../services/EndingService.js";
 import { ProgressionService } from "../services/ProgressionService.js";
+import { CharacterService } from "../services/CharacterService.js";
 import { criarBotaoGiz, preloadChalkAssets } from "../ui/ChalkButton.js";
 import { criarBotaoImagem } from "../ui/ImageButton.js";
 import { pixelTextStyle } from "../ui/TextStyles.js";
@@ -70,6 +71,14 @@ export class StageSelectScene extends Phaser.Scene {
   create() {
     if (!this.perfil) {
       this.scene.start("MainMenuScene");
+      return;
+    }
+
+    if (!CharacterService.isPlayableCharacterId(this.perfil.personagemId)) {
+      this.scene.start("ProfileScene", {
+        perfil: this.perfil,
+        aviso: "Escolha um personagem para continuar."
+      });
       return;
     }
 

@@ -13,7 +13,7 @@ import { InteractionPrompt } from "../ui/InteractionPrompt.js";
 import { CHALK_TEXTURES, criarBotaoGiz } from "../ui/ChalkButton.js";
 import { pixelTextStyle } from "../ui/TextStyles.js";
 import { GAMEPLAY_AREA } from "../data/gameplayLayout.js";
-import { PLAYABLE_CHARACTERS } from "../data/charactersData.js";
+import { CHARACTER_FRAME_ASSETS } from "../data/charactersData.js";
 import { CharacterService } from "../services/CharacterService.js";
 
 const SALA_PADRAO = GAMEPLAY_AREA;
@@ -51,9 +51,9 @@ export class BaseStageScene extends Phaser.Scene {
       }
     });
 
-    Object.values(PLAYABLE_CHARACTERS).forEach((personagem) => {
-      if (!this.textures.exists(personagem.sourceTexture)) {
-        this.load.image(personagem.sourceTexture, personagem.path);
+    Object.values(CHARACTER_FRAME_ASSETS).flat().forEach(({ sourceKey, path }) => {
+      if (!this.textures.exists(sourceKey)) {
+        this.load.image(sourceKey, path);
       }
     });
   }
@@ -80,12 +80,14 @@ export class BaseStageScene extends Phaser.Scene {
       return;
     }
 
-    const personagemAnterior = this.perfil.personagemId;
-    CharacterService.obterOuSortearPersonagem(this.perfil);
-    if (this.perfil.personagemId !== personagemAnterior) {
-      this.perfil = salvarPerfil(this.perfil);
+    if (!CharacterService.isPlayableCharacterId(this.perfil.personagemId)) {
+      this.scene.start("ProfileScene", {
+        perfil: this.perfil,
+        aviso: "Escolha um personagem antes de iniciar uma fase."
+      });
+      return;
     }
-    prepararPersonagens(this);
+    prepararPersonagens(this, this.perfil.personagemId);
 
     this.interacaoVisuais = new Map();
     this.conclusaoAberta = false;
@@ -108,8 +110,6 @@ export class BaseStageScene extends Phaser.Scene {
     this.physics.world.setBounds(sala.x, sala.y, sala.width, sala.height);
     this.player.body.setCollideWorldBounds(true);
 
-    this.cursors = this.input.keyboard.createCursorKeys();
-    this.keys = this.input.keyboard.addKeys("W,A,S,D");
     this.interactKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     this.escapeKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
 
@@ -631,7 +631,7 @@ export class BaseStageScene extends Phaser.Scene {
     };
   }
 
-  update() {
+  update(_time, delta) {
     if (!this.player || !this.choiceDialog) {
       return;
     }
@@ -652,7 +652,7 @@ export class BaseStageScene extends Phaser.Scene {
       return;
     }
 
-    this.player.update(this.cursors, this.keys);
+    this.player.update(delta);
 
     const interacao = this.obterInteracaoAtiva();
     if (interacao) {
